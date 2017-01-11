@@ -3,7 +3,7 @@
 
 ### online web app 
 
-The shiny app of Agatha is available [here](https://phillippro.shinyapps.io/shiny/).
+The shiny app of Agatha is available [here](https://phillippro.shinyapps.io/Agatha/).
 If you use Agatha in your work, please cite **"Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangle periodic signals from correlated noise in a periodogram framework, to be submitted"**
 
 ### use the app locally
