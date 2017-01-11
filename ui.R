@@ -1,5 +1,4 @@
 library(shiny)
-library(datasets)
 shinyUI(fluidPage(
     includeCSS("my_style.css"),
 #    titlePanel(HTML("<font color='blue'>Needle</font>")),
@@ -45,10 +44,7 @@ shinyUI(fluidPage(
                  )
                  ),
         tabPanel("Model Comparison",
-                                        #                 tags$link(rel = 'stylesheet', type = 'text/css', href = 'www/style.css'),
-                                        #                 progressInit(),
                  pageWithSidebar(
-                                        #                     headerPanel('BFP-based model comparison'),
                      headerPanel(''),
                      sidebarPanel(
 ######noise model comparison
@@ -140,7 +136,7 @@ shinyUI(fluidPage(
                          uiOutput("alpha"),
                          uiOutput('zoom'),
                          checkboxInput('scale','Scaling power',value=FALSE),
-                         checkboxInput('show.signal','Show potential signals',value=TRUE),
+                         checkboxInput('show.signal','Show significant signals',value=TRUE),
                          helpText("If you change the calculating parameters, click both 'calculate' and 'plot' to show the 2D periodogram.", "If you only change the visualization parameters, only click 'plot' to show the periodogram."),
                          actionButton('data.update', 'calculate'),
                          actionButton('plot2D', 'plot'),

@@ -60,5 +60,6 @@ for(jj in 2:Nsig.max){
         sig.levels <- cbind(sig.levels,rv.ls$sig.level)
     }
     cnames <- c(cnames,paste0(per.type.seq,jj,'signal:',ypar,':',name))
+    ylabs <- c(ylabs,ylab)
 }
 

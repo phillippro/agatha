@@ -1,5 +1,4 @@
 library(shiny)
-library(datasets)
 library(magicaxis)
 #library(lomb)
 #library(ggplot2)
@@ -28,7 +27,7 @@ p {
 <br />
 <p>Agatha is the name of my wife's most favorite crime novelist, Agatha Christie. Similar to the investigations of various crimes in the detective novels, the Agatha algorithm is to find the weak signals embedded in the sea of correlated noise. 
 
-This web app is based on the code in GitHub: <a href='https://github.com/phillippro/PeriodoFrame'>https://github.com/phillippro/PeriodoFrame</a>. If you use this web app in your work, please cite 'Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangle periodic signals from correlated noise in a periodogram framework, to be submitted'.</p>
+This web app is based on the code in GitHub: <a href='https://github.com/phillippro/agatha'>https://github.com/phillippro/agatha</a>. If you use this web app in your work, please cite 'Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangling periodic signals from correlated noise in a periodogram framework, to be submitted'.</p>
 
 <p>
 Agatha is based on the Bayes factor periodogram (BFP) and the marginalized likelihood periodogram (MLP). The BFP is calculated by maximizing the likelihood of a combination of sinusoids, linear functions of time and noisy proxies, and the moving average model. The Bayes factor for a given frequency is derived from the maximum likelihood by approximating the Bayes factor using the Bayes Information Criterion (BIC). The MLP is calculated by marginalizing the likelihood over the amplitudes of sinusoids and the parameters in a linear function of time. Before calculating MLP, the best-fitted noise model is subtracted from the data. 
@@ -428,7 +427,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     return(unique(vars))
   })
 
-  per.par <- eventReactive(input$plot1D,{
+  per.par <- reactive({
       vals <- list(ofac=input$ofac,frange=10^input$frange,per.type=input$per.type)
       if(any(input$per.type=='MLP'|input$per.type=='BFP')){
           vals <- c(vals,Nmas=input$Nmas)
@@ -672,7 +671,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
         },
       content = function(file) {
         pdf(file,8,8)
-        per1D.plot(per1D.data()$per.data,per1D.data()$tits,per1D.data()$pers,per1D.data()$levels,download=TRUE)
+        per1D.plot(per1D.data()$per.data,per1D.data()$tits,per1D.data()$pers,per1D.data()$levels,ylabs=per1D.data()$ylabs,download=TRUE)
         dev.off()
       })
 
@@ -694,7 +693,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
         pdf(file,4,4)
         par(mar=c(5,5,1,1))
         ind <- which(input$per1D.name==per1D.data()$tits)
-        per1D.plot(per1D.data()$per.data,per1D.data()$tits,per1D.data()$pers,per1D.data()$levels,download=TRUE,index=ind)
+        per1D.plot(per1D.data()$per.data,per1D.data()$tits,per1D.data()$pers,per1D.data()$levels,per1D.data()$ylabs,download=TRUE,index=ind)
         dev.off()
       })
 
@@ -714,7 +713,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     
     output$per <- renderPlot({
         if(is.null(per1D.data())) return()
-        per1D.plot(per1D.data()$per.data,per1D.data()$tits,per1D.data()$pers,per1D.data()$levels)
+        per1D.plot(per1D.data()$per.data,per1D.data()$tits,per1D.data()$pers,per1D.data()$levels,per1D.data()$ylabs)
     })
 
     output$plot.1Dper <- renderUI({

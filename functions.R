@@ -53,6 +53,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
     sig.levels <- c()
     cnames <- c()
     pers <- c()
+    ylabs <- c()
 #    lapply(1:Nvar, function(i){
     for(i in 1:Nvar){
         var <- pars[[i]]$var
@@ -91,7 +92,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 name <- 'power'
             }else if(per.type=='BGLS'){
                 rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=y,err=dy,ofac=ofac,fmin=frange[1],fmax=frange[2])
-                ylab <- expression('log(ML/'*ML[max]*')')
+                ylab <- 'log(ML)'
                 name <- 'logML'
 #                rv.ls[['sig.level']] <- max(rv.ls$power)-log(c(10,100,1000))
             }else if(per.type=='BFP'){
@@ -103,7 +104,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             }else if(per.type=='MLP'){
                 rv.ls <- MLP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,Nma=Nma,Inds=Inds,Indices=Indices,
                              ofac=ofac,fmin=frange[1],fmax=frange[2],MLP.type=MLP.type)
-                ylab <- expression('log(ML/'*ML[max]*')')
+                ylab <- 'log(ML)'
                 name <- 'logML'
             }else if(per.type=='LS'){
                 rv.ls <- lsp(times=tab[,1]-min(tab[,1]),x=y,ofac=ofac,from=frange[1],to=frange[2],alpha=c(0.1,0.01,0.001))
@@ -111,7 +112,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 name <- 'power'
             }
 #            tit <- paste('Periodogram:',per.type,'; Target:',instrument,'; Observable',ypar)
-            tit <- paste0(per.type,'; ',instrument,';', ypar,'; 1 signal')
+            tit <- paste0(per.type,'; ',instrument,';', ypar,';1 signal')
             if(length(rv.ls$sig.level)<3){
                 sig.levels <- cbind(sig.levels,c(rv.ls$sig.level,rep(NA,3-length(rv.ls$sig.level))))
             }else{
@@ -124,7 +125,10 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             y <- rep(1,nrow(tab))
             rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=rep(2,nrow(tab)),err=rep(0.2,nrow(tab)), ofac=ofac)
             tit <- paste0('BGLS;',instrument,';',ypar,'; 1 signal')
+            ylab <- 'log(ML)'
+            name <- 'logML'
         }
+        ylabs <- c(ylabs,ylab)
         tits <- c(tits,tit)
         pers <- c(pers,per.type)
 ###plot
@@ -159,10 +163,10 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         }
     }
     colnames(per.data) <- cnames
-    return(list(per.data=per.data,tits=tits,pers=pers,levels=sig.levels))
+    return(list(per.data=per.data,tits=tits,pers=pers,levels=sig.levels,ylabs=ylabs))
 }
 
-per1D.plot <- function(per.data,tits,pers,levels,download=FALSE,index=NULL){
+per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL){
     if(is.null(index)){
         par(mfrow=c(ceiling(Nmax.plots/2),2),mar=c(5,5,3,1),cex.lab=1.5,cex.axis=1.5,cex=1,cex.main=1.0)
     }
@@ -180,7 +184,7 @@ per1D.plot <- function(per.data,tits,pers,levels,download=FALSE,index=NULL){
     }
     for(i in inds){ 
         power <- per.data[,i+1]
-        ylab <- gsub('.+:','',colnames(per.data)[i+1])
+        ylab <- ylabs[i]#gsub('.+:','',colnames(per.data)[i+1])
         per.type <- gsub('[[:digit:]]signal:.+','',colnames(per.data)[i+1])
         f1 <- gsub('signal:.+','',colnames(per.data)[i+1])
         Nsig <- gsub('[A-Z]','',f1)

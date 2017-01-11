@@ -1,9 +1,0 @@
-name: shiny
-account: phillippro
-server: shinyapps.io
-appId: 145486
-bundleId: 675880
-url: https://phillippro.shinyapps.io/shiny/
-when: 1484137698.43716
-asMultiple: FALSE
-asStatic: FALSE
