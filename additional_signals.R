@@ -6,11 +6,42 @@ leg.pos <- 'topright'
 ############################
 for(jj in 2:Nsig.max){
     cat('\nfind',jj,'signal!\n')
-    if(is.matrix(rv.ls$res)){
-        rr <- rv.ls$res[1,]
+    if(jj==2){
+        rr <- tab[,2]
     }else{
-        rr <- rv.ls$res
+        if(is.matrix(rv.ls$res)){
+            rr <- rv.ls$res[1,]
+        }else{
+            rr <- rv.ls$res
+        }
     }
+    ####oversampling the signal proximity to find precise periodicity
+    if(per.type.seq=='BFP'){
+        tmp <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,opt.type='sl',model.type='man',fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1],tol=tol)
+    }
+    if(per.type.seq=='MLP'){
+        tmp <- MLP(t=tab[,1]-min(tab[,1]),y=rr,dy=dy,Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1],MLP.type=MLP.type)
+    }
+    if(per.type.seq=='GLS'){
+        tmp <- gls(tab[,1],rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
+    }
+    if(per.type.seq=='BGLS'){
+        tmp <- bgls(tab[,1],rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
+    }
+    if(per.type.seq=='GLST'){
+        tmp <- glst(tab[,1],rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
+    }
+    if(per.type.seq=='LS'){
+        tmp <- lsp(times=tab[,1],x=rr,ofac=10,from=0.8/rv.ls$ps[1],to=1.2/rv.ls$ps[1])
+    }
+    if(is.matrix(rv.ls$res)){
+        rr <- tmp$res[1,]
+    }else{
+        rr <- tmp$res
+    }
+    cat('rv.ls$ps[1]=',rv.ls$ps[1],'\n')
+    cat('tmp$ps[1]=',tmp$ps[1],'\n')
+#####the following periodograms are for 
     if(per.type.seq=='BFP'){
         rv.ls <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type='sl',model.type='man',fmin=frange[1],fmax=frange[2],tol=tol)
         ylab <- 'log(BF)'

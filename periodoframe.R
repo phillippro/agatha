@@ -834,6 +834,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
         if(MLP.type=='sub'){
             y <- tmp$res
             data[,2] <- y
+            cat('sd(y)=',sd(y),'m/s\n')
             vars$y <- y
             vars$data <- data
         }
@@ -1290,6 +1291,5 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
             ndata[j+1] <- length(inds)
         }
     })
-
     return(list(tmid=tmid,P=tmp$P[index],powers=powers,rel.powers=rel.powers,ndata=ndata))
 }

@@ -16,7 +16,7 @@ if(length(args)>0){
 }else{
     np <- 2
     NI <- 3
-    Nma <- 1
+    Nma <- 0
     opt.type <- 'sl'#l or nl or sl(semi-linear)
 #    res.type <- 'kep'
     res.type <- 'cir'
@@ -167,7 +167,6 @@ target <- gsub('_.+','',f)
 rescale <- FALSE#TRUE
 #opt.types <- c('full','part','wr','rw','rep')
 ofac <- 1
-fmax <- 1#Pmin=0.5d
 mar.type <- 'part'
 Ndata <- nrow(tab)
 #model.type <- 'MA'#'MA' or 'auto'
@@ -248,8 +247,10 @@ if(ncol(tab)>3){
         Indices <- Indices[,ind.sort]
     }
 }
+fmax <- 0.5#Pmin=0.5d
 #######make BFP 
 t1 <- proc.time()
+cat('fmax=',fmax,'\n')
 bf <- BFP(tab[,1],tab[,2],tab[,3],Nma=Nma,NI=NI,Indices=Indices,ofac=ofac,opt.type=opt.type,mar.type=mar.type,model.type=model.type,update=update,fmax=fmax,rescale=rescale,tol=tol)
 t2 <- proc.time()
 dur1 <- format((t2-t1)[3],digit=3)

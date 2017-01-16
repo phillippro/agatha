@@ -2,17 +2,17 @@ library(shiny)
 ############################################
 #####PartI: set parameters
 ############################################
-star <- 'HD177565'
+star <- 'ChallengeDataSet1'
 #star <- 'HD41248'
 #star <- 'HD172555'
 np <- 0
 NI <- 3
-Nma <- 1
+Nma <- 0
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
 #model.type <- 'auto'#manually setting the number of MA components and differential RVs
 model.type <- 'man'#automatically determine the optimal noise model
 tol <- 1e-12#numerical fitting precision tolerance 
-Nap <- 6#number of aperture 
+Nap <- 1#number of aperture 
 Nc <- 0#1
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
 ###To select the numbers of differential RVs and MA components, it is better not to include calibration data. 
@@ -32,6 +32,9 @@ MLP.type <- 'sub'#subtract the correlated noise from the data and then marginali
 #####PartII: load data
 ############################################
 f <- paste0('data/',star,'_HARPS_TERRA.dat')
+if(!file.exists(f)){
+f <- paste0('data/',star,'_HARPS.dat')
+}
 tab <- read.table(f)
 
 ############################################

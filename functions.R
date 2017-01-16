@@ -98,7 +98,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             }else if(per.type=='BFP'){
                 rv.ls <- BFP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,
                              Nma=Nma,Inds=Inds,model.type='man',Indices=Indices,
-                             ofac=ofac,fmin=frange[1],fmax=frange[2],tol=1e-12)
+                             ofac=ofac,fmin=frange[1],fmax=frange[2],tol=1e-16)
                 ylab <- 'log(BF)'
                 name <- 'logBF'
             }else if(per.type=='MLP'){
@@ -221,7 +221,7 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
             offset <- c(0.08*(max(power)-ymin), 0.02*(max(power)-ymin))
             pmaxs <- pmaxs[1]
             power.max <- power.max[1]
-            text(pmaxs,power.max+offset[1],pos=3,labels=format(pmaxs,digit=3),col='red',cex=1.0)
+            text(pmaxs,power.max+offset[1],pos=3,labels=format(pmaxs,digit=4),col='red',cex=1.0)
             arrows(pmaxs,power.max+offset[1],pmaxs,power.max+offset[2],col='red',length=0.05)
             par(xpd=FALSE)
         }
@@ -270,7 +270,7 @@ per2D.data <- function(vars,per.par,data){
     t <- tab[,1]%%2400000#min(tab[,1])
     y <- tab[,2]
     dy <- tab[,3]
-    mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nmas,Inds=Inds,tol=1e-12,Indices=Indices)
+    mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nmas,Inds=Inds,tol=1e-16,Indices=Indices)
     x2 <- mp$tmid
     y2 <- mp$P
     z2 <- mp$powers

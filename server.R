@@ -84,7 +84,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
   output$nma <- renderUI({
     if(is.null(input$per.type)) return()
     if(any(input$per.type=='MLP' | input$per.type=='BFP')){
-        selectizeInput("Nmas",'Number of MA components',choices = 0:10,selected = 1,multiple=FALSE)
+        selectizeInput("Nmas",'Number of MA components',choices = 0:10,selected = 0,multiple=FALSE)
     }
   })
 
@@ -205,7 +205,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
           }else if(ncol(df[[i]])==3){
             colnames(df[[i]])=c('Time','RV','eRV')#other
           }else{
-            colnames(df[[i]])=c('Time','RV','eRV',paste0('proxies',1:(ncol(df[[i]])-3)))#other
+            colnames(df[[i]])=c('Time','RV','eRV',paste0('proxy',1:(ncol(df[[i]])-3)))#other
           }
         }
       }
@@ -236,6 +236,8 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
           colnames(df[[i]])=c('Time','RV','eRV',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
         }else if(ncol(df[[i]])==19){
           colnames(df[[i]])=c('Time','RV','eRV','C3AP2-1',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
+      }else if(ncol(df[[i]])==20){
+          colnames(df[[i]])=c('Time','RV','eRV','Halpha','S-index',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
       }else if(ncol(df[[i]])==22){
           colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index','C3AP2-1',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
       }else if(ncol(df[[i]])==21){
@@ -339,17 +341,18 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
         y <- gsub('.+:','',ns.wt()$label[indy])
         varx <- data()[[instrument]][,gsub('.+:','',input$xs[i])]
         vary <- data()[[instrument]][,gsub('.+:','',input$ys[i])]
-        if(!grepl('RV|eRV|Time','',input$xs[i])) varx <- scale(varx)
-        if(!grepl('RV|eRV|Time','',input$ys[i])) vary <- scale(vary)
+        if(!grepl('RV|eRV|Time',input$xs[i])) varx <- scale(varx)
+        if(!grepl('RV|eRV|Time',input$ys[i])) vary <- scale(vary)
         plot(varx,vary,xlab=x,ylab=y,pch=20,cex=0.5)
 #        legend('topright',legend=paste0('r=',format(cor(varx,vary),digit=3)),bty='n',cex=1.5)
         if(grepl('RV',input$xs[i]) | grepl('RV',input$ys[i])){
             eRV <- data()[[instrument]][,grep('eRV',colnames(data()[[instrument]]))]
-            if(grepl('RV',input$ys[i])){
+            if(grepl('RV',input$ys[i]) & grepl('Time',input$xs[i])){
                 arrows(varx,vary-eRV,varx,vary+eRV,length=0.03,angle=90,code=3)
-            }else{
-                arrows(varx-eRV,vary,varx+eRV,vary,length=0.03,angle=90,code=3)
             }
+#else{
+#                arrows(varx-eRV,vary,varx+eRV,vary,length=0.03,angle=90,code=3)
+#            }
         }
     }
   
@@ -529,7 +532,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
 
   observeEvent(input$compare,{
       output$BFtab <- renderUI({
-          output$table <- renderTable({model.selection()$logBF},digits=1,caption = "BIC-estimated Bayes factor",
+          output$table <- renderTable({model.selection()$logBF},digits=1,caption = "BIC-estimated Bayes factor",rownames=TRUE,colnames=TRUE,
                                       caption.placement = getOption("xtable.caption.placement", "top"),
                                       caption.width = getOption("xtable.caption.width", NULL))
           tableOutput('table')

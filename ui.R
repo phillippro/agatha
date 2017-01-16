@@ -3,7 +3,7 @@ shinyUI(fluidPage(
     includeCSS("my_style.css"),
 #    titlePanel(HTML("<font color='blue'>Needle</font>")),
     titlePanel(HTML("Agatha")),
-    h4(HTML("<em>Disentangle periodic signals from correlated noise in a periodogram framework</em>")),
+    h4(HTML("<em>Disentangling periodic signals from correlated noise in a periodogram framework</em>")),
     tabsetPanel(
         tabPanel("About Agatha",uiOutput('about')
                  ),               
@@ -79,7 +79,7 @@ shinyUI(fluidPage(
                          uiOutput('nma'),
                          uiOutput('proxy'),
                          uiOutput('Inds'),
-                         sliderInput("frange","Range of frequency in base-10 log scale",min = -5,max = 1,value = c(-3,0),step=0.1),
+                         sliderInput("frange","Range of frequency in base-10 log scale",min = -5,max = 1,value = c(-3,-0.2),step=0.1),
                          sliderInput("ofac", "Oversampling factor", min = 0, max = 30, value=1,step=0.2),
                                         # "Empty inputs" - they will be updated after the data is uploaded
                          helpText("If the BFP is selected, only 'RV' is available for the following observable selection."),

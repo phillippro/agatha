@@ -5,8 +5,8 @@ source('periodograms.R')#for other periodograms
 ############################################
 #####PartIV: make PeriodoFrame
 ############################################
-#per.types <- c('MLP','BGLS','GLST','GLS','LS')
-per.types <- c('BFP')
+#per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
+per.types <- c('MLP')
 if(NI>0){
     Inds <- 1:NI
 }else{
