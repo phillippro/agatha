@@ -7,7 +7,7 @@ shinyUI(fluidPage(
     tabsetPanel(
         tabPanel("About Agatha",uiOutput('about')
                  ),               
-        tabPanel("Upload File",
+        tabPanel("Choose File",
                  sidebarLayout(
                      sidebarPanel(
                                         # h4('Upload Type'),
@@ -16,6 +16,7 @@ shinyUI(fluidPage(
                                       choices=c('Select from the list'='list','Upload files'='upload'),  selected='list'),
 #                         uiOutput('select.type'),
                          uiOutput('files'),
+                         uiOutput('upfile'),
                          uiOutput('uptext'),
                          actionButton('show','upload and show data'),
                          uiOutput('download.data')
@@ -32,6 +33,7 @@ shinyUI(fluidPage(
                  pageWithSidebar(
                      headerPanel(''),
                      sidebarPanel(
+                         uiOutput("scatter.target"),
                          uiOutput("xs"),
                          uiOutput("ys"),
                          actionButton('scatter', 'show scatter plot'),
@@ -48,24 +50,26 @@ shinyUI(fluidPage(
                      headerPanel(''),
                      sidebarPanel(
 ######noise model comparison
+                         uiOutput('comp.target'),
                          sliderInput("Nma.max",'Maximum number of MA components',min=0,max=10,value=1,step=1), 
-                         uiOutput('proxy.text'),
                          uiOutput('proxy.type'),
+                         uiOutput('proxy.text'),
                          uiOutput('nI.basic'),
                          uiOutput('nI.max'),
                          helpText("The number of proxies is counted from the fourth column of the data."),
-                                        #uiOutput('nI.max'),
+                         uiOutput('Nman'),
+                         uiOutput('nI.man'),
                          uiOutput('nI.comp'),
                                         # uiOutput('nI.group'),
                                         # uiOutput('mlp'),
                          actionButton('compare', 'compare noise models')
-                     ),
+                     ,width = 6),
                      mainPanel(                         
                          tags$style(type="text/css", "#file_progress { max-width: 200px; }"),
                          uiOutput('BFtab'),
                          uiOutput('optNoise'),
                          uiOutput('download.logBF.table')
-                     )
+                     ,width=6)
                  )
                  ),
 ####calculate 1D periodograms
@@ -73,11 +77,11 @@ shinyUI(fluidPage(
                  pageWithSidebar(
                      headerPanel(''),
                      sidebarPanel(
+                         uiOutput('per.target'),
+                         helpText("If more than one data sets are selected, only the MLP can be calculated for the combined data. To calculate the periodogram, the data sets are combined after subtracted by the best-fitted noise components."),
+                         uiOutput('per.type'),
                          helpText("There could be errors in the calculation of the BFP if the data is small (e.g. less than 20 data points) or not well sampled. "),
-                         selectInput("per.type",'Periodogram type',
-                                     choices=c('BFP','MLP','GLST','BGLS','GLS','LS'),selected="MLP",multiple=TRUE),
                          uiOutput('nma'),
-                         uiOutput('proxy'),
                          uiOutput('Inds'),
                          sliderInput("frange","Range of frequency in base-10 log scale",min = -5,max = 1,value = c(-3,-0.2),step=0.1),
                          sliderInput("ofac", "Oversampling factor", min = 0, max = 30, value=1,step=0.2),
@@ -111,11 +115,11 @@ shinyUI(fluidPage(
                  pageWithSidebar(
                      headerPanel(''),
                      sidebarPanel(
+                         uiOutput('per.target2'),
+                         helpText("If more than one data sets are selected, only the MLP-based 2D periodogram can be calculated for the combined data. To calculate the periodogram, the data sets are combined after subtracted by the best-fitted noise components."),
+                         uiOutput('per.type2'),
                          helpText("To make 2D periodograms, the time series should contain at least 100 data points over a time span beyond 100 time units."),
-                         selectInput("per.type2",'Periodogram type',
-                                     choices=c('BFP','MLP','GLST','BGLS','GLS','LS'),selected="MLP",multiple=FALSE),
                          uiOutput('nma2'),
-                         uiOutput('proxy2'),
                          uiOutput('Inds2'),
                          sliderInput("frange2","Range of frequency in base-10 log scale",min = -4,max = 1,value = c(-3,-1),step=0.1),
                          sliderInput("ofac2", "Oversampling factor", min = 0, max = 20, value=1,step=0.2),
@@ -146,7 +150,8 @@ shinyUI(fluidPage(
                      ),
                      mainPanel(
 #                         plotOutput("per2", width = "750px", height = 400)
-                        uiOutput("plot.2Dper")
+                         uiOutput("plot.2Dper"),
+                         htmlOutput("color")
                      )
                  )
                  )

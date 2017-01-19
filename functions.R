@@ -31,6 +31,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
     for(k in 1:length(var)){
         assign(var[k],per.par[[var[k]]])
     }
+    Nmas <- unlist(Nmas)
     per.data <- c()
     tits <- c()
     pars <- list()
@@ -39,10 +40,8 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
     for(j1 in 1:length(vars)){
         for(j2 in 1:length(per.type)){
             if(per.type[j2]=='MLP' | per.type[j2]=='BFP'){
-                for(j3 in 1:length(Nmas)){
-                    pars[[kk]] <- list(var=vars[j1],per.type=per.type[j2],Inds=Inds,Nma=Nmas[j3])
-                    kk <- kk+1
-                }
+                pars[[kk]] <- list(var=vars[j1],per.type=per.type[j2],Inds=Inds[[1]],Nma=Nmas[1])
+                kk <- kk+1
             }else{
                 pars[[kk]] <- list(var=vars[j1],per.type=per.type[j2],Inds=0,Nma=0)
                 kk <- kk+1
@@ -57,14 +56,26 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
 #    lapply(1:Nvar, function(i){
     for(i in 1:Nvar){
         var <- pars[[i]]$var
-        Nma <- as.integer(pars[[i]]$Nma)
-        Inds <- as.integer(pars[[i]]$Inds)
+        if(length(per.target)==1){
+            Nma <- as.integer(pars[[i]]$Nma)
+            Inds <- as.integer(pars[[i]]$Inds)
+        }
         per.type <- pars[[i]]$per.type
-        instrument <- gsub(':.+','',var)
-        ypar <- gsub('.+:','',var)
-        tab <- data[[instrument]]
-        Indices <- NULL
-        if(ncol(tab)>3){
+#        instrument <- paste(per.target,collapse='-')
+        if(length(per.target)>1){
+            instrument <- 'combined'
+            subdata <- lapply(1:length(per.target),function(j) data[[per.target[j]]])
+            tmp <- combine.data(data=subdata,Ninds=Inds,Nmas=Nmas)
+            tab <- tmp$cdata
+            idata <- tmp$idata
+            colnames(tab) <- colnames(data[[1]])[1:3]
+        }else{
+            instrument <- per.target
+            tab <- data[[per.target]]
+        }
+        ypar <- var
+        Indices <- NA
+        if(ncol(tab)>3 & !all(Inds==0)){
             Indices <- as.matrix(tab[,4:ncol(tab)])
             if(!is.matrix(Indices) & !is.data.frame(Indices)){
                 Indices <- matrix(Indices,ncol=1)
@@ -102,8 +113,11 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 ylab <- 'log(BF)'
                 name <- 'logBF'
             }else if(per.type=='MLP'){
-                rv.ls <- MLP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,Nma=Nma,Inds=Inds,Indices=Indices,
-                             ofac=ofac,fmin=frange[1],fmax=frange[2],MLP.type=MLP.type)
+                if(length(per.target)>1){
+                    rv.ls <- MLP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,Nma=0,Inds=0,Indices=Indices,ofac=ofac,fmin=frange[1],fmax=frange[2],MLP.type=MLP.type)
+                }else{
+                    rv.ls <- MLP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,fmin=frange[1],fmax=frange[2],MLP.type=MLP.type)
+                }
                 ylab <- 'log(ML)'
                 name <- 'logML'
             }else if(per.type=='LS'){
@@ -118,9 +132,6 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             }else{
                 sig.levels <- cbind(sig.levels,rv.ls$sig.level)
             }
-#            if(per.type=='MLP' | per.type=='BFP'){
-#                tit <- paste('proxy columns:',paste(Inds,collapse=','),'; q =',Nma,';',tit)
-#            }
         }else{
             y <- rep(1,nrow(tab))
             rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=rep(2,nrow(tab)),err=rep(0.2,nrow(tab)), ofac=ofac)
@@ -188,12 +199,8 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
         per.type <- gsub('[[:digit:]]signal:.+','',colnames(per.data)[i+1])
         f1 <- gsub('signal:.+','',colnames(per.data)[i+1])
         Nsig <- gsub('[A-Z]','',f1)
-#        cat('Nsig=',Nsig,'\n')
-#        cat('per.type=',per.type,'\n')
         if(per.type=='BFP'){
-#            ymin <- max(median(power),0)
             ymin <- median(power)
-
             ylim <- c(ymin,max(power)+0.1*(max(power)-ymin))
         }else{
             ymin <- min(power)
@@ -204,7 +211,6 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
         magaxis(side=1)
         abline(h=levels[,i],lty=2)
         p <- show.peaks(ps=P,powers=power,levels=levels[,i])
-#        legend('topright',legend=paste0(Nsig,'signal'),bty='n')
         if(!is.matrix(p)){
             pmaxs <- p[1]
             power.max <- p[2]
@@ -233,15 +239,14 @@ per2D.data <- function(vars,per.par,data){
     for(k in 1:length(var)){
         assign(var[k],per.par[[var[k]]])
     }
+    Nmas <- unlist(Nmas)
     pars <- list()
     kk <- 1
     for(j1 in 1:length(vars)){
         for(j2 in 1:length(per.type)){
             if(per.type[j2]=='MLP' | per.type[j2]=='BFP'){
-                for(j3 in 1:length(Nmas)){
-                    pars[[kk]] <- list(var=vars[j1],per.type=per.type[j2],Inds=Inds,Nma=Nmas[j3])
-                    kk <- kk+1
-                }
+                pars[[kk]] <- list(var=vars[j1],per.type=per.type[j2],Inds=Inds[[1]],Nma=Nmas[1])
+                kk <- kk+1
             }else{
                 pars[[kk]] <- list(var=vars[j1],per.type=per.type[j2],Inds=0,Nma=0)
                 kk <- kk+1
@@ -249,15 +254,25 @@ per2D.data <- function(vars,per.par,data){
         }
     }
     i <- 1
-    var <- pars[[i]]$var
-    Nma <- as.integer(pars[[i]]$Nma)
-    Inds <- as.integer(pars[[i]]$Inds)
+    if(length(per.target)==1){
+        Nma <- as.integer(pars[[i]]$Nma)
+        Inds <- as.integer(pars[[i]]$Inds)
+    }
     per.type <- pars[[i]]$per.type
-    instrument <- gsub(':.+','',var)
-    ypar <- gsub('.+:','',var)
-    tab <- data[[instrument]]
+    if(length(per.target)>1){
+        instrument <- 'combined'
+        subdata <- lapply(1:length(per.target),function(j) data[[per.target[j]]])
+        tmp <- combine.data(data=subdata,Ninds=Inds,Nmas=Nmas)
+        tab <- tmp$cdata
+        idata <- tmp$idata
+        colnames(tab) <- colnames(data[[1]])[1:3]
+    }else{
+        instrument <- per.target
+        tab <- data[[per.target]]
+    }
+    ypar <- var
     Indices <- NA
-    if(ncol(tab)>3){
+    if(ncol(tab)>3 & !all(Inds==0)){
         Indices <- as.matrix(tab[,4:ncol(tab)])
         if(!is.matrix(Indices) & !is.data.frame(Indices)){
             Indices <- matrix(Indices,ncol=1)
@@ -270,17 +285,30 @@ per2D.data <- function(vars,per.par,data){
     t <- tab[,1]%%2400000#min(tab[,1])
     y <- tab[,2]
     dy <- tab[,3]
-    mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nmas,Inds=Inds,tol=1e-16,Indices=Indices)
+    if(length(per.target)==1){
+        mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nma,Inds=Inds,tol=1e-16,Indices=Indices)
+    }else{
+        mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=0,Inds=0,tol=1e-16,Indices=Indices)
+    }
     x2 <- mp$tmid
     y2 <- mp$P
     z2 <- mp$powers
     z2.rel <- mp$rel.powers
-    return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel))
+    if(length(per.target)==1){
+        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel))
+    }else{
+        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel,subdata=subdata,idata=idata))
+    }
 }
+
 plotMP <- function(vals,pars){
     var <- names(pars)
     for(k in 1:length(var)){
         assign(var[k],pars[[var[k]]])
+    }
+    if(length(per.target)>1){
+        subdata <- vals$subdata
+        idata <- vals$idata
     }
     t <- vals$t
     y <- vals$y
@@ -333,6 +361,8 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
                     }
                 }
             }
+        }else if(proxy.type=='man'){
+            NI.inds <- groups
         }else{
             NI.inds <- list(list(Nbasic:NI.max))
         }

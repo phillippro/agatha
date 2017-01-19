@@ -3,25 +3,47 @@ library(magicaxis)
 if(scale) zz <- zz.rel
 th <- median(zz)-alpha*sd(zz)
 zlim <- c(th,max(zz))
+xlim <- range(t)
 zz[zz<th] <- th+1e-3
 size <- 1.5
 ###plot
-par(cex.axis=size,cex.lab=size,cex=size,mar=c(5,5,1,1),oma=c(0,0,1,2))
+s <- 5
+par(cex.axis=size,cex.lab=size,cex=size,oma=c(s,0,0,0),mar=c(0,0,0,0))
 layout(matrix(1:4, ncol = 2,byrow=TRUE), widths = 1, heights = c(2,4), respect = FALSE)
 ###data plot
 for(j in 1:2){
     if(j==1){
-        par(mar = c(0, 5.1, 1, 0))#,oma=c(1,1,1,4))
+        par(mar = c(0, s, 1, 0))#,oma=c(1,1,1,4))
     }else{
-        par(mar= c(0, 0, 1, 4.1))#,oma=c(1,1,1,4))
+        par(mar= c(0, 0, 1, s))#,oma=c(1,1,1,4))
     }
 ###plot
-    if(j==1){
-        plot(t,y,ylab='RV[m/s]',xaxt='n',pch=20,cex=0.5)
+    Ntarget <- length(per.target)
+    cols <- c('black','red','blue','green','orange','brown','cyan','pink')
+    if(exists('idata')){
+        for(k in 1:Ntarget){
+            t1 <- idata[[k]][,1]
+            y1 <- idata[[k]][,2]
+            dy1 <- idata[[k]][,3]
+            if(k==1){
+                if(j==1){
+                    plot(t1%%2400000,y1,ylab='RV[m/s]',xaxt='n',pch=20,cex=0.5,xlim=xlim,ylim=range(y),col=cols[1])
+                }else{
+                    plot(t1%%2400000,y1,ylab='RV[m/s]',xaxt='n',yaxt='n',pch=20,cex=0.5,xlim=xlim,ylim=range(y),col=cols[1])
+                }
+            }else{
+                points(t1%%2400000,y1,col=cols[k-1],pch=20,cex=0.5)
+            }
+            arrows(t1,y1-dy1,t1,y1+dy1,length=0.03,angle=90,code=3,col=cols[k])
+        }
     }else{
-        plot(t,y,ylab='RV[m/s]',xaxt='n',yaxt='n',pch=20,cex=0.5)
+        if(j==1){
+            plot(t,y,ylab='RV[m/s]',xaxt='n',pch=20,cex=0.5)
+        }else{
+            plot(t,y,ylab='RV[m/s]',xaxt='n',yaxt='n',pch=20,cex=0.5)
+        }
+        arrows(t,y-dy,t,y+dy,length=0.03,angle=90,code=3)
     }
-    arrows(t,y-dy,t,y+dy,length=0.03,angle=90,code=3)
 }
 #######periodograsm plot
 cols <- rainbow(length(y),start=0)#
@@ -47,16 +69,17 @@ ind.show <- which.min(sigs)
 #cat('dim(zz)=',dim(zz),'\n')
 for(j in 1:2){
     if(j==1){
-        par(mar = c(5.1, 5.1, 0, 0.5))
-        image(xx,log10(yy),t(zz),xlab='',ylab='Period [day]',axes=FALSE,col=cols,xlim=c(min(t),max(t)),zlim=zlim)
-        axis(side=1)
+        par(mar = c(1, s, 0, 0))
+        image(xx,log10(yy),t(zz),xlab='',ylab='Period [day]',axes=FALSE,col=cols,xlim=xlim,zlim=zlim)
+        at.labels <- axis(side=1,xpd=TRUE)
         magaxis(side=2,labels=FALSE,unlog=TRUE,tcl=-0.5)
         Ntick <- round(log10(max(yy))-log(min(yy)))
         ticks <- ceiling(log10(min(yy)))+(0:Ntick)*round(log10(max(yy))-log(min(yy)))/Ntick
         axis(side=2,at=ticks,labels=10^ticks)
-        mtext(text='Time [JD-2400000]',side=1,outer=TRUE,line=-2,cex=0.9*size)
+        mtext(text='Time [JD-2400000]',side=1,outer=TRUE,line=2.2,cex=0.9*size)
+#        mtext(at=c(min(t)-(max(t)-min(t))/10,0.5*(log10(max(yy))-log10(min(yy)))),text='Period [day]',side=2,outer=TRUE,line=2.2,cex=0.9*size)
     }else{
-        par(mar = c(5.1, 0, 0, 4.1))
+        par(mar = c(1, 0, 0, s))
         Nsig <- length(sigs)
         flow <- 0.9
         fup <- 1.2
@@ -80,13 +103,15 @@ for(j in 1:2){
                 pmax <- 3*min(yy)
                 inds <- which(yy>pmin & yy<pmax)
             }
-            image(xx,log10(yy[inds]),t(zz[inds,]),xlab='',ylab='Orbital period [day]',axes=FALSE,col=cols,xlim=c(min(t),max(t)),zlim=zlim)
-            at.labels <- axis(side=1,labels=FALSE)
-            labs <- at.labels
-            labs[2*(1:floor(length(at.labels)/2))] <- ''
-            labs[1] <- ''
-#            cat('labs=',labs,'\n')
-            axis(side=1,at=at.labels,labels=labs)
+            image(xx,log10(yy[inds]),t(zz[inds,]),xlab='',ylab='Orbital period [day]',axes=FALSE,col=cols,xlim=xlim,zlim=zlim)
+            if(FALSE){
+                labs <- at.labels
+                labs[2*(1:floor(length(at.labels)/2))] <- ''
+                labs[1] <- ''
+                axis(side=1,at=at.labels,labels=labs,xpd=TRUE)
+            }else{
+                axis(side=1)
+            }
             ticks <- seq(log10(pmin),log10(pmax),length.out=5)
             tick.lab <- c('',format(10^ticks[-c(1,length(ticks))],digit=2),'')
             axis(side=2,at=ticks,labels=tick.lab)
@@ -106,4 +131,4 @@ for(j in 1:2){
 ###make pretty axes
     axis(side=3,labels=FALSE)
 }
-image.plot(t(zz),col=cols,legend.only=TRUE,zlim = zlim,legend.mar=10.1,xpd=NA)
+image.plot(t(zz),col=cols,legend.only=TRUE,zlim = zlim,legend.mar=12.1,xpd=NA)

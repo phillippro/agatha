@@ -45,12 +45,21 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     if(input$uptype=='list'){
         selectizeInput('target','Select data files from the list',
                   choices=gsub('.dat','',gsub('_TERRA.+','',list.files('data',
-                                    full.names=FALSE))),multiple=FALSE)
+                                    full.names=FALSE))),multiple=TRUE)
     }else if(input$uptype=='upload'){
-        fileInput('file', 'Choose data file', multiple=FALSE)
+        selectizeInput('Nf','Number of files to upload',choices=1:10,selected=1,multiple=FALSE) 
 #      selectizeInput('ins','Instrument',choices=c('HARPS','KECK','SOPHIE','AAT','HARPSN'),selected=NULL,multiple=FALSE)
     }
   })
+
+    output$upfile <- renderUI({
+        if(is.null(input$Nf)) return()
+        if(input$uptype=='upload'){
+            lapply(1:as.integer(input$Nf),function(i){
+                fileInput(paste0('file',i), paste('Choose file',i), multiple=TRUE)
+            })
+        }
+    })
   
     output$uptext <- renderUI({
         if(is.null(input$uptype)) return()
@@ -62,14 +71,19 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
  output$nI.max <- renderUI({
       if(is.null(input$proxy.type)) return()
       if(input$proxy.type=='cum'){
-          selectInput("ni.max",'Maximum number of noise proxies',choices = 0:NI.max(),selected = min(3,NI.max()))
+          selectInput("ni.max",'Maximum number of noise proxies',choices = 0:NI.max()[input$comp.target],selected = min(3,NI.max()[input$comp.target]))
       }
   }) 
 
-  NI.max <- reactive({
-      if(is.null(data())) return()
-      ncol(data()[[1]])-3
-  })
+    NI.max <- reactive({
+        if(is.null(data())) return()
+        val <- c()
+        for(i in 1:length(data())){
+            val <- c(val,ncol(data()[[i]])-3)
+        }
+        names(val) <- names(data())
+        return(val)
+    })
   
     output$per.type.seq <- renderUI({
         if(is.null(input$sequence)) return()
@@ -82,58 +96,89 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     })
 
   output$nma <- renderUI({
-    if(is.null(input$per.type)) return()
+    if(is.null(Ntarget())) return()
     if(any(input$per.type=='MLP' | input$per.type=='BFP')){
-        selectizeInput("Nmas",'Number of MA components',choices = 0:10,selected = 0,multiple=FALSE)
+        lapply(1:Ntarget(), function(i){
+            selectizeInput(paste0("Nma",i),paste('Number of MA components for',input$per.target[i]),choices = 0:10,selected = 0,multiple=FALSE)
+        })
     }
   })
 
   output$nma2 <- renderUI({
-    if(is.null(input$per.type)) return()
-    if(any(input$per.type=='MLP' | input$per.type=='BFP')){
-        selectInput("Nmas2",'Number of MA components',choices = 0:10,selected = 0,multiple=FALSE)
+    if(is.null(Ntarget())) return()
+    if(any(input$per.type2=='MLP' | input$per.type2=='BFP')){
+        lapply(1:Ntarget2(), function(i){
+            selectizeInput(paste0("Nma2.",i),paste('Number of MA components for',input$per.target2[i]),choices = 0:10,selected = 0,multiple=FALSE)
+        })
     }
   })
-  
-  output$proxy <- renderUI({
-    if(is.null(input$per.type)) return()
-    if((any(grepl('MLP',input$per.type)) | any(grepl('BFP',input$per.type))) & NI.max()>0){
-      checkboxInput('proxy','Include noise proxies in the model',value=FALSE)
-    }
+    
+    output$per.target <- renderUI({
+        if(is.null(data())) return()
+        selectizeInput("per.target",'Data sets',choices=names(data()),selected=names(data())[1],multiple=TRUE)
+    }) 
+
+    Ntarget <- reactive({
+        length(input$per.target)
+    })
+
+    output$per.target2 <- renderUI({
+        if(is.null(data())) return()
+        selectizeInput("per.target2",'Data sets',choices=names(data()),selected=names(data())[1],multiple=TRUE)
+    }) 
+
+    Ntarget2 <- reactive({
+        length(input$per.target2)
+    })
+
+    output$per.type <- renderUI({
+        if(is.null(Ntarget())) return()
+        if(Ntarget()>1){
+            selectInput("per.type",'Periodogram type',
+                        choices=c('MLP'),selected="MLP",multiple=TRUE)
+        }else{
+            selectInput("per.type",'Periodogram type',
+                        choices=c('BFP','MLP','GLST','BGLS','GLS','LS'),selected="MLP",multiple=TRUE)
+        }
+    })
+
+    output$per.type2 <- renderUI({
+        if(is.null(Ntarget2())) return()
+        if(Ntarget2()>1){
+            selectInput("per.type2",'Periodogram type', choices='MLP',selected="MLP",multiple=FALSE)
+        }else{
+            selectInput("per.type2",'Periodogram type',
+                        choices=c('BFP','MLP','GLST','BGLS','GLS','LS'),selected="MLP",multiple=TRUE)
+        }
+    })
+
+    output$Inds <- renderUI({
+        if(is.null(input$per.type) | is.null(data())) return()
+        lapply(1:Ntarget(),function(i){
+            selectInput(paste0('Inds',i),paste('Noise proxies for',input$per.target[i]),choices = 0:NI.max()[i],selected = 0,multiple=TRUE)
+        })
+    })
+
+    output$Inds2 <- renderUI({
+        if(is.null(data()) | is.null(input$per.target2)) return()
+        lapply(1:Ntarget2(),function(i){
+            selectInput(paste0("Inds2.",i),paste('Noise proxies for',input$per.target2[i]),choices = 0:NI.max()[i],selected = 0,multiple=TRUE)
+        })
+    })
+    
+    output$proxy.text <- renderUI({
+      helpText("If 'cumulative' is selected, the noise proxies would be arranged in decreasing order of the Pearson correlation coefficients between proxies and RVs. Then proxies would be compared cumulatively from the basic number up to the maximum number of proxies. If 'group' is selected, the proxies would not be rearranged, and would be compared in groups, which are determined by the basic number of proxies and group division numbers. For example, if the basic number is 4 and division numbers are 6,11,19, models with proxies of {1-4}, {1-6}, {1-4, 7-11}, {1-4, 12-19} would be compared. If 'manual' is selected, the user should manually input the groups of proxies for comparison. Note that '0' means no proxy. ")
   })
 
-  output$proxy2 <- renderUI({
-    if(is.null(input$per.type2)) return()
-    if((any(grepl('MLP',input$per.type)) | any(grepl('BFP',input$per.type))) & NI.max()>0){
-      checkboxInput('proxy2','Include noise proxies in the model',value=FALSE)
-    }
-  })
-
-  output$Inds2 <- renderUI({
-    if(is.null(input$proxy2)) return()
-    if(input$proxy2){
-        selectInput("Inds2",'Noise proxies to be included in the model',choices = 1:NI.max(),selected = 0,multiple=TRUE)
-    }
-  })
-  
-  output$Inds <- renderUI({
-    if(is.null(input$proxy)) return()
-    if(input$proxy){
-        selectInput("Inds",'Noise proxies to be included in the model',choices = 1:NI.max(),selected = 0,multiple=TRUE)
-    }
-  })
-
-  output$proxy.text <- renderUI({
-      if(is.null(NI.max())) return()
-      if(NI.max()>0){
-    helpText("If 'cumulative' is selected, the noise proxies would be arranged in decreasing order of the Pearson correlation coefficients between proxies and RVs. Then proxies would be compared cumulatively from the basic number up to the maximum number of proxies. If 'group' is selected, the proxies would not be rearranged, and would be compared in groups, which are determined by the basic number of proxies and group division numbers. For example, if the basic number is 4 and division numbers are 6,11,19, models with proxies of {1-4}, {1-6}, {1-4, 7-11}, {1-4, 12-19} would be compared.")
-      }
-  })
+    output$comp.target <- renderUI({
+        if(is.null(data())) return()
+        selectizeInput("comp.target",'Data sets',choices=names(data()),selected=names(data())[1],multiple=FALSE)
+    }) 
 
   output$proxy.type <- renderUI({
       if(is.null(NI.max())) return()
-      if(NI.max()>0){
-          radioButtons("proxy.type",'Type of proxy comparison',c("Cumulative"="cum","Group"='group'))
+      if(any(NI.max()[input$comp.target]>0)){
+          radioButtons("proxy.type",'Type of proxy comparison',c("Cumulative"="cum","Group"='group','Manual'='man'))
       }else{
           output$warn <- renderText({'No indices available for comparison!'})
           verbatimTextOutput("warn")
@@ -142,17 +187,35 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
 
   output$nI.basic <- renderUI({
       if(is.null(input$proxy.type)) return()
-      if(NI.max()>0){
+      if(NI.max()[input$comp.target]>0 & input$proxy.type!='man'){
 #input$proxy.type=='cum'
-          selectInput("NI0",'Basic number of noise proxies',choices = 0:NI.max(),selected = 0)#NI.max())
+          selectInput("NI0",'Basic number of noise proxies',choices = 0:NI.max()[input$comp.target],selected = 0)#NI.max())
       }
   }) 
-  
+
+    output$Nman <- renderUI({
+        if(is.null(input$proxy.type)) return()
+        if(input$proxy.type=='man' & NI.max()[input$comp.target]>0){
+#            sliderInput("Nman",'Number of proxy groups',min=1,max=NI.max(),value=1,step=1)
+            selectizeInput("Nman",'Number of proxy groups',choices=1:6,selected=1,multiple=FALSE)
+        }
+    })
+
+    output$nI.man <- renderUI({
+        if(is.null(input$proxy.type) | is.null(input$Nman)) return()
+        if(input$proxy.type=='man' & NI.max()[input$comp.target]>0){
+            lapply(1:as.integer(input$Nman), function(i) {
+                selectInput(paste0("NI.man",i),paste0('proxy group ',i),
+                            choices=0:NI.max()[input$comp.target],multiple = TRUE)
+            })
+        }
+    }) 
+
   output$nI.comp <- renderUI({
     if(is.null(input$proxy.type) | is.null(input$NI0)) return()
-    if(input$proxy.type=='group' & (NI.max()>as.integer(input$NI0))){
+    if(input$proxy.type=='group' & NI.max()[input$comp.target]>as.integer(input$NI0)){
       selectInput("NI.group",'Group division numbers',
-                  choices=(as.integer(input$NI0)+1):NI.max(),multiple = TRUE )
+                  choices=(as.integer(input$NI0)+1):NI.max()[input$comp.target],multiple = TRUE )
     }
   }) 
   
@@ -161,22 +224,24 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     gsub('.dat','',f1)
   })
   
-  instr <- reactive({
-      gsub('.+_','',target())
-  })
-  
   target <- reactive({
-    if(is.null(input$target) & is.null(input$file)) return()
+    if(is.null(input$target) & is.null(input$Nf)) return()
     if(input$uptype=='list'){
       return(input$target)
     }else if(input$uptype=='upload'){
-        fname <- input$file$name
+        fname <- unlist(lapply(1:as.integer(input$Nf),function(j){ 
+input[[paste0('file',j)]]$name}))
+        cat('fname=',fname,'\n')
         f <- gsub('.dat','',fname)
         f <- gsub('_TERRA','',f)
         return(f)
     }
   })
 
+  instr <- reactive({
+      gsub('.+_','',target())
+  })
+  
   # added "session" because updateSelectInput requires it
   data <- eventReactive(input$show,{
     ins <- instr()
@@ -187,7 +252,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
         df <- rep(tmp,length(instr()))
         names(df) <- target()#paste0(instr())
         for(i in 1:length(instr())){
-          data.path <- input$file$datapath
+          data.path <- input[[paste0('file',i)]]$datapath
           tab <- read.table(data.path)
           inds <- sort(tab[,1],index.return=TRUE)$ix
           tab <- tab[inds,]
@@ -254,23 +319,29 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     return(df)
 })
 
-    output$data.out <- downloadHandler(
-        filename = function() {
-            f1 <- gsub(" ",'_',Sys.time())
-            f2 <- gsub(":",'-',f1)
-            paste('data-', f2, '.txt', sep='')
-        },
-        content = function(file) {
-            write.table(data()[[1]], file,quote=FALSE,row.names=FALSE)#FALSE,col.names=FALSE
-        }
-    )
+    observe({
+#        if(is.null(data())) return()
+        lapply(1:length(data()),function(j)
+            output[[paste0('data.out',j)]] <- downloadHandler(
+                filename = function() {
+                    f1 <- gsub(" ",'_',Sys.time())
+                    f2 <- gsub(":",'-',f1)
+                    paste('data_',names(data())[j], f2, '.txt', sep='')
+                },
+                content = function(file) {
+                    write.table(data()[[j]], file,quote=FALSE,row.names=FALSE)#FALSE,col.names=FALSE
+                }
+            )
+               )
+    })
 
 
-    output$download.data <- renderUI({
-        if(is.null(input$uptype)) return()
-        if(input$uptype=='list' & !is.null(data())){
-            downloadButton('data.out', 'Download data')
-        }
+    observeEvent(input$show,{
+        output$download.data <- renderUI({
+                lapply(1:length(data()),function(j){
+                    downloadButton(paste0('data.out',j), paste('Download',names(data())[j]))
+                })
+            })
     })
 
   output$tab <- renderUI({
@@ -292,15 +363,17 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     }
   })
 
+###variable names
   ns <- reactive({
     nam <- c()
     for(i in 1:length(instr())){
       names <- colnames(data()[[i]])
       names <- names[names!='Time' & names!='eRV']
       names <- c(names,'Window Function')
-      nam <- c(nam,paste(names(data())[i],names,sep=':'))
+#      nam <- c(nam,paste(names(data())[i],names,sep=':'))
+      nam <- c(nam,names)
     }
-    return(nam)
+    return(unique(nam))
   })
   
   ns.wt <- reactive({
@@ -317,19 +390,28 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     return(list(name=nam,label=lab))
   })
   
-  output$xs <- renderUI({
-    if(is.null(data())){return()}
-    selectizeInput("xs", "Choose x axis", 
-                  choices  = ns.wt()$name,
-                  selected = ns.wt()$name[grep('Time',ns.wt()$name)[1]],multiple=FALSE)
-  })
-  
+    output$scatter.target <- renderUI({
+        if(is.null(data())) return()
+        selectizeInput("scatter.target",'Data sets',choices=names(data()),selected=names(data())[1],multiple=FALSE)
+    }) 
+
+    output$xs <- renderUI({
+        if(is.null(data()) | is.null(input$scatter.target)) return()
+        names <- ns.wt()$name
+        nam <- names[grep(input$scatter.target,names)]
+        selectizeInput("xs", "Choose x axis", 
+                       choices  = nam,
+                       selected = nam[grepl('Time',nam)],multiple=FALSE)
+    })
+    
 
     output$ys <- renderUI({
-        if(is.null(data())){return()}
+        if(is.null(data()) | is.null(input$scatter.target)) return()
+        names <- ns.wt()$name
+        nam <- names[grepl(input$scatter.target,names)]
         selectizeInput("ys", "Choose y axis", 
-                       choices  = ns.wt()$name,
-                       selected = ns.wt()$name[grep('RV',ns.wt()$name)[1]],multiple=FALSE)
+                       choices  = nam,
+                       selected = nam[grep(':RV$',nam)],multiple=FALSE)
     })
    
     scatterInput <- function(){
@@ -358,8 +440,10 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
   
     observeEvent(input$scatter,{
         output$sca <- renderPlot({
-            par(mfrow=c(length(input$xs),1),cex=1,cex.axis=1.5,cex.lab=1.5,mar=c(5,5,1,1))
-            scatterInput()
+            isolate({
+                par(mfrow=c(length(input$xs),1),cex=1,cex.axis=1.5,cex.lab=1.5,mar=c(5,5,1,1))
+                scatterInput()
+            })
         })
     })
 
@@ -374,7 +458,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste0("scatter_",f2,".pdf")
+            paste0("scatter_",input$scatter.target,'_',f2,".pdf")
         },
         content = function(file) {
             pdf(file,4,4)
@@ -391,8 +475,8 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     
     output$var <- renderUI({
         if(is.null(input$per.type)) return()
+#        cat('ns()=',ns(),'\n')
         if(!any(grepl('MLP',input$per.type)) & !any(grepl('BFP',input$per.type))){
-#        selectInput("yvar", "Choose observables", choices  = c('all','RVs','Indices',ns()),selected = NULL,multiple=TRUE)         
             selectInput("yvar", "Choose observables", choices  = ns(),selected = ns()[grepl('RV',ns())],multiple=TRUE)         
         }else{
             selectInput("yvar", "Choose observables", 
@@ -402,7 +486,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     })
 
   output$var2 <- renderUI({
-      if(is.null(input$per.type)) return()
+      if(is.null(input$per.type2)) return()
       selectInput("yvar2", "Choose observables", 
                   choices  = ns()[grepl('RV',ns())],
                     selected = ns()[grepl('RV',ns())],multiple=FALSE)    
@@ -431,18 +515,15 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
   })
 
   per.par <- reactive({
-      vals <- list(ofac=input$ofac,frange=10^input$frange,per.type=input$per.type)
-      if(any(input$per.type=='MLP'|input$per.type=='BFP')){
-          vals <- c(vals,Nmas=input$Nmas)
-          if(!is.null(input$proxy)){
-              if(input$proxy){
-                  vals <- c(vals,Inds=list(input$Inds))
-              }else{
-                  vals <- c(vals,Inds=0)
-              }
-          }else{
-              vals <- c(vals,Inds=0)
+      vals <- list(ofac=input$ofac,frange=10^input$frange,per.type=input$per.type,per.target=input$per.target)
+      if(any(input$per.type=='MLP' | input$per.type=='BFP')){
+          Nmas <- c()
+          Inds <- list()
+          for(i in 1:Ntarget()){
+              Inds <- c(Inds,as.integer(input[[paste0('Inds',i)]]))
+              Nmas <- c(Nmas,as.integer(input[[paste0('Nma',i)]]))
           }
+          vals <- c(vals,Nmas=list(Nmas),Inds=list(Inds))
       }else{
           vals <- c(vals,Nmas=0,Inds=0)
       }
@@ -453,18 +534,15 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
   })
 
   per.par2 <- reactive({
-      vals <- list(ofac=input$ofac2,frange=10^input$frange2,per.type=input$per.type2)
-      if(any(input$per.type=='MLP'|input$per.type=='BFP')){
-          vals <- c(vals,Nmas=input$Nmas2)
-          if(!is.null(input$proxy2)){
-              if(input$proxy2){
-                  vals <- c(vals,Inds=list(input$Inds2))
-              }else{
-                  vals <- c(vals,Inds=0)
-              }
-          }else{
-              vals <- c(vals,Inds=0)
+      vals <- list(ofac=input$ofac2,frange=10^input$frange2,per.type=input$per.type2,per.target=input$per.target2)
+      if(any(input$per.type2=='MLP'|input$per.type2=='BFP')){
+          Nmas <- c()
+          Inds <- list()
+          for(i in 1:Ntarget2()){
+              Inds <- c(Inds,as.integer(input[[paste0('Inds2.',i)]]))
+              Nmas <- c(Nmas,as.integer(input[[paste0('Nma2.',i)]]))
           }
+          vals <- c(vals,Nmas=list(Nmas),Inds=list(Inds))
       }else{
           vals <- c(vals,Nmas=0,Inds=0)
       }
@@ -473,8 +551,8 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
   })
   
   model.selection <- eventReactive(input$compare,{
-      instrument <- gsub(':.+','',ns()[1])
-      tab <- data()[[instrument]]
+#      instrument <- instr()[input]#gsub(':.+','',ns()[1])
+      tab <- data()[[input$comp.target]]
       if(!is.null(input$NI0)){
           Nbasic <- as.integer(input$NI0)
       }else{
@@ -484,7 +562,21 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
           if(input$proxy.type=='group'){
               groups <- input$NI.group
               proxy.type <- 'group'
-              ni <- NI.max()
+              ni <- NI.max()[input$comp.target]
+          }else if(input$proxy.type=='man'){
+              groups <- list()
+              cat('names(input)=',names(input),'\n')
+              for(i in 1:as.integer(input$Nman)){
+                  inds <- as.integer(input[[paste0('NI.man',i)]])
+                  if(!all(inds==0)){
+                      inds <- inds[inds>0]
+                  }
+                  groups[[i]] <- inds
+              }
+              cat('names(groups)=',names(groups),'\n')
+              cat('length(groups)=',length(groups),'\n')
+              proxy.type <- 'man'
+              ni <- NI.max()[input$comp.target]
           }else{
               groups <- NULL
               proxy.type <- 'cum'
@@ -543,7 +635,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
       filename = function(){
           f1 <- gsub(" ",'_',Sys.time())
           f2 <- gsub(":",'-',f1)
-          paste('logBF-', f2, '.txt', sep='')
+          paste('logBF_',input$comp.target,'_', f2, '.txt', sep='')
       },
       content = function(file) {
           write.table(round(model.selection()$logBF.download,digit=1), file,quote=FALSE,row.names=FALSE)
@@ -579,6 +671,20 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
           htmlOutput('noise.opt')
       }
   })
+
+output$color <- renderUI({
+    if(is.null(MP.data()) | is.null(Ntarget2())) return()
+    if(Ntarget2()>1){
+            ts <- c()
+            for(j in 1:Ntarget2()){
+                cols <- c('black','red','blue','green','orange','brown','cyan','pink')
+                ts <- c(ts,paste0(cols[j],': Noise-subtracted ',input$per.target2[j]))
+            }
+            out <- paste(ts,collapse='<br/><br/>')
+            h5(HTML(paste0('<br/>',out)))
+#        htmlOutput('encode')
+    }
+})
 
   Nper <- eventReactive(input$plot1D,{
     if(is.null(input$per.type)) return()

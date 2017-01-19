@@ -834,7 +834,6 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
         if(MLP.type=='sub'){
             y <- tmp$res
             data[,2] <- y
-            cat('sd(y)=',sd(y),'m/s\n')
             vars$y <- y
             vars$data <- data
         }
@@ -1046,6 +1045,44 @@ BFP.comp <- function(t, y, dy, Nmas,NI.inds=NULL,Indices=NULL){
     dur <- format((t2-t1)[3],digit=3)
     cat('model comparison computation time:',dur,'s\n\n')
     return(list(logBF=out$logBF,Nma=out$Nma,Inds=out$Inds))
+}
+
+combine.data <- function(data,Ninds,Nmas){
+###data is a list of matrices
+    out <- c()
+    idata <- data
+    for(j in 1:length(data)){
+        Inds <- Ninds[[j]]
+        tab <- data[[j]]
+        t0 <- tab[,1]%%2400000
+        t <- tab[,1]-min(tab[,1])
+        y <- tab[,2]
+        dy <- tab[,3]
+        if(ncol(tab)>3){
+            Indices <- tab[,4:ncol(tab)]
+        }
+        if(all(Inds==0)){
+            NI <- 0
+#            Indices <- NA
+        }else{
+            NI <- length(Inds)
+            if(!is.null(Indices)){
+                if(NI<2){
+                    Indices <- matrix(Indices[,Inds],ncol=1)
+                }else{
+                    Indices <- Indices[,Inds]
+                }
+            }
+        }
+        vars <- global.notation(t,y,dy,Indices,Nmas[j],NI)
+        if(is.numeric(Indices)) Indices <- matrix(Indices,ncol=1)
+        tmp <- par.optimize(data=tab,Indices=Indices,NI=NI,Nma=Nmas[j],opt.type='nl',type='noise',pars=vars,tol=1e-16)
+        val <- cbind(t0,tmp$res,dy)
+        idata[[j]] <- val
+        out <- rbind(out,val)
+    }
+    inds <- sort(out[,1],index.return=TRUE)$ix
+    return(list(cdata=out[inds,],idata=idata))
 }
 
 ####Bayes factor periodogram
