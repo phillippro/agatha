@@ -20,6 +20,10 @@ for(jj in 2:Nsig.max){
         tmp <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,opt.type='sl',model.type='man',fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1],tol=tol)
     }
     if(per.type.seq=='MLP'){
+        if(length(per.target)>1){
+            Nma <- 0
+            Inds <- 0
+        }
         tmp <- MLP(t=tab[,1]-min(tab[,1]),y=rr,dy=dy,Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1],MLP.type=MLP.type)
     }
     if(per.type.seq=='GLS'){
