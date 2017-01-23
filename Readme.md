@@ -4,7 +4,7 @@
 ### online web app 
 
 The shiny app of Agatha is available [here](https://phillippro.shinyapps.io/Agatha/).
-If you use Agatha in your work, please cite **"Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangle periodic signals from correlated noise in a periodogram framework, to be submitted"**
+If you use Agatha in your work, please cite **"Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangle periodic signals from correlated noise in a periodogram framework, submitted to A&A"**
 
 ### use the app locally
 If you want to use the app locally, you download the whole GitHub repository to a local directory. Then you should install R and R packages. If you have already have R installed, 
