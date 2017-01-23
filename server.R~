@@ -25,26 +25,16 @@ p {
 </head>
 <body>
 <br />
-<p>Agatha is the name of my wife's most favorite crime novelist, Agatha Christie. Similar to the investigations of various crimes in the detective novels, the Agatha algorithm is to find the weak signals embedded in correlated noise. 
+<p>Agatha is the name of my wife's most favorite crime novelist, Agatha Christie. Similar to the investigations of various crimes in the detective novels, the Agatha algorithm is to find the weak signals embedded in the sea of correlated noise. 
 
-This web app is based on the code in GitHub: <a href='https://github.com/phillippro/agatha'>https://github.com/phillippro/agatha</a>. If you use this web app in your work, please cite 'Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangling periodic signals from correlated noise in a periodogram framework, submitted to MNRAS'. The abstract of this paper is available <a href='https://www.dropbox.com/s/4ug8tfqyfcsr9gx/Agatha_abstract.pdf?dl=0'>here</a>.</p>
-
-<p>Agatha has the following features:</p>
-<ul>
-  <li>Fit the time-correlated noise using the moving average model</li>
-  <li>Compare noise models to select the Goldilocks noise model</li>
-  <li>Optimize the frequency-dependent linear trend simultaneously with sinusoids and noise components</li>
-  <li>Account for wavelength-dependent noise by fitting a set of linear functions of the difference between radial velocities (or other wavelength-dependent proxies for non-RV data sets) measured at different wavelengths</li>
-  <li>Assess the significance of signals using the BIC-estimated Bayes factor</li>
-  <li>Produce the so-called \"moving/2D periodogram\" to visualize the change of signals with time thus visually testing the consistency of signals.</li>
-</ul>
+This web app is based on the code in GitHub: <a href='https://github.com/phillippro/agatha'>https://github.com/phillippro/agatha</a>. If you use this web app in your work, please cite 'Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangling periodic signals from correlated noise in a periodogram framework, submitted to A&A'.</p>
 
 <p>
 Agatha is based on the Bayes factor periodogram (BFP) and the marginalized likelihood periodogram (MLP). The BFP is calculated by maximizing the likelihood of a combination of sinusoids, linear functions of time and noisy proxies, and the moving average model. The Bayes factor for a given frequency is derived from the maximum likelihood by approximating the Bayes factor using the Bayes Information Criterion (BIC). The MLP is calculated by marginalizing the likelihood over the amplitudes of sinusoids and the parameters in a linear function of time. Before calculating MLP, the best-fitted noise model is subtracted from the data. 
 </p>
 
 <p>
-The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the generalized LS (GLS), the GLS with floating trend (GLST) and the Bayesian GLS (BGLS). All periodograms can be computed for the sub-dataset within a moving time window to form 2D periodograms, which are also called 'moving periodograms'. Moving periodograms are used to check the consistency of signals in time. The user should adjust the 'visualization parameters' to optimize the visualization of signals in moving periodograms. 
+The BFP and MLP can be compared with the other periodograms, which are the Lomb-Scargle periodogram (LS), the generalized LS (GLS), the GLS with floating trend (GLST), the Bayesian GLS (BGLS). All periodograms can be computed for the sub-dataset within a moving time window to form 2D periodograms, which are also called 'moving periodograms'. Moving periodograms are used to check the consistency of signals in time. The user should adjust the 'visualization parameters' to optimize the visualization of signals in moving periodograms. 
 </p>
 </body>
 </html>
@@ -115,7 +105,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
   })
 
   output$nma2 <- renderUI({
-    if(is.null(Ntarget2())) return()
+    if(is.null(Ntarget())) return()
     if(any(input$per.type2=='MLP' | input$per.type2=='BFP')){
         lapply(1:Ntarget2(), function(i){
             selectizeInput(paste0("Nma2.",i),paste('Number of MA components for',input$per.target2[i]),choices = 0:10,selected = 0,multiple=FALSE)
