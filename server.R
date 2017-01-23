@@ -119,6 +119,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     }) 
 
     Ntarget <- reactive({
+        if(is.null(input$per.target)) return()
         length(input$per.target)
     })
 
@@ -157,7 +158,7 @@ The BFP and MLP can be compared with the other periodograms, which are the Lomb-
     })
 
     output$Inds <- renderUI({
-        if(is.null(input$per.type) | is.null(data())) return()
+        if(is.null(input$per.type) | is.null(data()) | is.null(Ntarget())) return()
         lapply(1:Ntarget(),function(i){
             selectInput(paste0('Inds',i),paste('Noise proxies for',input$per.target[i]),choices = 0:NI.max()[i],selected = 0,multiple=TRUE)
         })
@@ -554,77 +555,77 @@ input[[paste0('file',j)]]$name}))
       return(vals)
   })
   
-  model.selection <- eventReactive(input$compare,{
-#      instrument <- instr()[input]#gsub(':.+','',ns()[1])
-      tab <- data()[[input$comp.target]]
-      if(!is.null(input$NI0)){
-          Nbasic <- as.integer(input$NI0)
-      }else{
-          Nbasic <- 0
-      }
-      if(!is.null(input$proxy.type)){
-          if(input$proxy.type=='group'){
-              groups <- input$NI.group
-              proxy.type <- 'group'
-              ni <- NI.max()[input$comp.target]
-          }else if(input$proxy.type=='man'){
-              groups <- list()
-              cat('names(input)=',names(input),'\n')
-              for(i in 1:as.integer(input$Nman)){
-                  inds <- as.integer(input[[paste0('NI.man',i)]])
-                  if(!all(inds==0)){
-                      inds <- inds[inds>0]
-                  }
-                  groups[[i]] <- inds
-              }
-              cat('names(groups)=',names(groups),'\n')
-              cat('length(groups)=',length(groups),'\n')
-              proxy.type <- 'man'
-              ni <- NI.max()[input$comp.target]
-          }else{
-              groups <- NULL
-              proxy.type <- 'cum'
-              ni <- as.integer(input$ni.max)
-          }
-      }else{
-          groups <- NULL
-          proxy.type <- 'cum'
-          ni <- 0
-      }
-      out <- calcBF(data=tab,Nbasic=Nbasic,
-                    proxy.type=proxy.type,
-                    Nma.max=as.integer(input$Nma.max),
-                    groups=groups,Nproxy=ni)
-      col.names <- c()
-      for(j in 1:length(out$Nmas)){
-          if(out$Nmas[j]==0){
-              col.names <- c(col.names,'white noise')
-          }else{
-              col.names <- c(col.names,paste0('MA(',out$Nmas[j],')'))
-          }
-      }
-      row.names <- c()
-      for(j in 1:length(out$Inds)){
-          if(all(out$Inds[[j]]==0)){
-              row.names <- c(row.names,'no proxy')
-          }else{
-              row.names <- c(row.names,paste0('proxies: ',paste(out$Inds[[j]],collapse=',')))
-          }
-      }
-      logBF <- data.frame(round(out$logBF,digit=1))
-      colnames(logBF) <- col.names
-      rownames(logBF) <- row.names
-      cat('colnames(logBF)=',colnames(logBF),'\n')
-      cat('rownames(logBF)=',rownames(logBF),'\n')
-      logBF.download <- logBF
-      colnames(logBF.download) <- paste0('MA',out$Nmas)
-      rnames <- c()
-      for(j in 1:nrow(logBF)){
-          rnames <- c(rnames,paste0('proxy',paste(out$Inds[[j]],collapse='-')))
-      }
-      rownames(logBF.download) <- NULL#rnames
-      return(list(logBF=logBF,out=out,logBF.download=logBF.download))
-  })
+    model.selection <- eventReactive(input$compare,{
+                                        #      instrument <- instr()[input]#gsub(':.+','',ns()[1])
+        tab <- data()[[input$comp.target]]
+        if(!is.null(input$NI0)){
+            Nbasic <- as.integer(input$NI0)
+        }else{
+            Nbasic <- 0
+        }
+        if(!is.null(input$proxy.type)){
+            if(input$proxy.type=='group'){
+                groups <- input$NI.group
+                proxy.type <- 'group'
+                ni <- NI.max()[input$comp.target]
+            }else if(input$proxy.type=='man'){
+                groups <- list()
+                cat('names(input)=',names(input),'\n')
+                for(i in 1:as.integer(input$Nman)){
+                    inds <- as.integer(input[[paste0('NI.man',i)]])
+                    if(!all(inds==0)){
+                        inds <- inds[inds>0]
+                    }
+                    groups[[i]] <- inds
+                }
+                cat('names(groups)=',names(groups),'\n')
+                cat('length(groups)=',length(groups),'\n')
+                proxy.type <- 'man'
+                ni <- NI.max()[input$comp.target]
+            }else{
+                groups <- NULL
+                proxy.type <- 'cum'
+                ni <- as.integer(input$ni.max)
+            }
+        }else{
+            groups <- NULL
+            proxy.type <- 'cum'
+            ni <- 0
+        }
+        out <- calcBF(data=tab,Nbasic=Nbasic,
+                      proxy.type=proxy.type,
+                      Nma.max=as.integer(input$Nma.max),
+                      groups=groups,Nproxy=ni)
+        col.names <- c()
+        for(j in 1:length(out$Nmas)){
+            if(out$Nmas[j]==0){
+                col.names <- c(col.names,'white noise')
+            }else{
+                col.names <- c(col.names,paste0('MA(',out$Nmas[j],')'))
+            }
+        }
+        row.names <- c()
+        for(j in 1:length(out$Inds)){
+            if(all(out$Inds[[j]]==0)){
+                row.names <- c(row.names,'no proxy')
+            }else{
+                row.names <- c(row.names,paste0('proxies: ',paste(out$Inds[[j]],collapse=',')))
+            }
+        }
+        logBF <- data.frame(round(out$logBF,digit=1))
+        colnames(logBF) <- col.names
+        rownames(logBF) <- row.names
+        cat('colnames(logBF)=',colnames(logBF),'\n')
+        cat('rownames(logBF)=',rownames(logBF),'\n')
+        logBF.download <- logBF
+        colnames(logBF.download) <- paste0('MA',out$Nmas)
+        rnames <- c()
+        for(j in 1:nrow(logBF)){
+            rnames <- c(rnames,paste0('proxy',paste(out$Inds[[j]],collapse='-')))
+        }
+        rownames(logBF.download) <- NULL#rnames
+        return(list(logBF=logBF,out=out,logBF.download=logBF.download))
+    })
 
   observeEvent(input$compare,{
       output$BFtab <- renderUI({
