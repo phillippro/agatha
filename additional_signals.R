@@ -27,7 +27,7 @@ for(jj in 2:Nsig.max){
         tmp <- MLP(t=tab[,1]-min(tab[,1]),y=rr,dy=dy,Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1],MLP.type=MLP.type)
     }
     if(per.type.seq=='GLS'){
-        tmp <- gls(tab[,1],rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
+        tmp <- gls(tab[,1]-min(tab[,1]),rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
     }
     if(per.type.seq=='BGLS'){
         tmp <- bgls(tab[,1],rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
@@ -43,8 +43,6 @@ for(jj in 2:Nsig.max){
     }else{
         rr <- tmp$res
     }
-    cat('rv.ls$ps[1]=',rv.ls$ps[1],'\n')
-    cat('tmp$ps[1]=',tmp$ps[1],'\n')
 #####the following periodograms are for 
     if(per.type.seq=='BFP'){
         rv.ls <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type='sl',model.type='man',fmin=frange[1],fmax=frange[2],tol=tol)

@@ -105,7 +105,6 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=y,err=dy,ofac=ofac,fmin=frange[1],fmax=frange[2])
                 ylab <- 'log(ML)'
                 name <- 'logML'
-#                rv.ls[['sig.level']] <- max(rv.ls$power)-log(c(10,100,1000))
             }else if(per.type=='BFP'){
                 rv.ls <- BFP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,
                              Nma=Nma,Inds=Inds,model.type='man',Indices=Indices,
@@ -127,17 +126,17 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             }
 #            tit <- paste('Periodogram:',per.type,'; Target:',instrument,'; Observable',ypar)
             tit <- paste0(per.type,'; ',instrument,';', ypar,';1 signal')
-            if(length(rv.ls$sig.level)<3){
-                sig.levels <- cbind(sig.levels,c(rv.ls$sig.level,rep(NA,3-length(rv.ls$sig.level))))
-            }else{
-                sig.levels <- cbind(sig.levels,rv.ls$sig.level)
-            }
         }else{
             y <- rep(1,nrow(tab))
-            rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=rep(2,nrow(tab)),err=rep(0.2,nrow(tab)), ofac=ofac)
+            rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=rep(2,nrow(tab)),err=rep(0.2,nrow(tab)), ofac=ofac,fmin=frange[1],fmax=frange[2])
             tit <- paste0('BGLS;',instrument,';',ypar,'; 1 signal')
             ylab <- 'log(ML)'
             name <- 'logML'
+        }
+        if(length(rv.ls$sig.level)<3){
+            sig.levels <- cbind(sig.levels,c(rv.ls$sig.level,rep(NA,3-length(rv.ls$sig.level))))
+        }else{
+            sig.levels <- cbind(sig.levels,rv.ls$sig.level)
         }
         ylabs <- c(ylabs,ylab)
         tits <- c(tits,tit)
@@ -166,12 +165,13 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         per.data <- cbind(per.data,rv.ls$power)
         inds <- (ncol(per.data)-1):ncol(per.data)
         if(i==1)  cnames <- c(cnames,'P')
-        cnames <- c(cnames,paste0(pers[i],'1signal:',ypar,':',name))
-        if(exists('per.type.seq')){
+        cnames <- c(cnames,paste0(pers[i],'1signal:',gsub(' .+','',ypar),':',name))
+        if(exists('per.type.seq') & ypar=='RV'){
             if(per.type==per.type.seq){
                 source('additional_signals.R',local=TRUE)
             }
         }
+#        cat('cnames=',cnames,'\n')
     }
     colnames(per.data) <- cnames
     return(list(per.data=per.data,tits=tits,pers=pers,levels=sig.levels,ylabs=ylabs))
@@ -199,14 +199,8 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
         per.type <- gsub('[[:digit:]]signal:.+','',colnames(per.data)[i+1])
         f1 <- gsub('signal:.+','',colnames(per.data)[i+1])
         Nsig <- gsub('[A-Z]','',f1)
-        if(per.type=='BFP'){
-            ymin <- median(power)
-            ylim <- c(ymin,max(power)+0.1*(max(power)-ymin))
-        }else{
-            ymin <- min(power)
-            ylim <- c(min(power),max(power)+0.1*(max(power)-min(power)))
-        }
-        ylim <- c(min(power),max(power)+0.15*(max(power)-min(power)))
+        ymin <- median(power)
+        ylim <- c(ymin,max(power)+0.15*(max(power)-ymin))
         plot(P,power,xlab='Period [day]',ylab=ylab,xaxt='n',log='x',type='l',main=titles[i], ylim=ylim)
         magaxis(side=1)
         abline(h=levels[,i],lty=2)

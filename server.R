@@ -8,7 +8,7 @@ source('periodoframe.R')
 source("periodograms.R")
 source("mcmc_func.R",local=TRUE)
 source('functions.R',local=TRUE)
-Nmax.plots <- 16
+Nmax.plots <- 50
 count0 <- 0
 instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK')
 
@@ -32,7 +32,7 @@ This web app is based on the code in GitHub: <a href='https://github.com/phillip
 <p>Agatha has the following features:</p>
 <ul>
   <li>Fit the time-correlated noise using the moving average model</li>
-  <li>Compare noise models to select the Goldilocks noise model</li>
+  <li>Compare noise models to select the Goldilocks noise model (Feng et al. 2016, MNRAS, 461, 2440; available <a href='https://arxiv.org/abs/1606.05196'>here</a>)</li>
   <li>Optimize the frequency-dependent linear trend simultaneously with sinusoids and noise components</li>
   <li>Account for wavelength-dependent noise by fitting a set of linear functions of the difference between radial velocities (or other wavelength-dependent proxies for non-RV data sets) measured at different wavelengths</li>
   <li>Assess the significance of signals using the BIC-estimated Bayes factor</li>
@@ -57,19 +57,10 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                   choices=gsub('.dat','',gsub('_TERRA.+','',list.files('data',
                                     full.names=FALSE))),multiple=TRUE)
     }else if(input$uptype=='upload'){
-        selectizeInput('Nf','Number of files to upload',choices=1:10,selected=1,multiple=FALSE) 
-#      selectizeInput('ins','Instrument',choices=c('HARPS','KECK','SOPHIE','AAT','HARPSN'),selected=NULL,multiple=FALSE)
+        fileInput('files', 'Choose files', multiple=TRUE) 
+#selectizeInput('Nf','Number of files to upload',choices=1:10,selected=1,multiple=FALSE) 
     }
   })
-
-    output$upfile <- renderUI({
-        if(is.null(input$Nf)) return()
-        if(input$uptype=='upload'){
-            lapply(1:as.integer(input$Nf),function(i){
-                fileInput(paste0('file',i), paste('Choose file',i), multiple=TRUE)
-            })
-        }
-    })
   
     output$uptext <- renderUI({
         if(is.null(input$uptype)) return()
@@ -240,14 +231,12 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
   })
   
   target <- reactive({
-    if(is.null(input$target) & is.null(input$Nf)) return()
+    if(is.null(input$target) & is.null(input$files)) return()
     if(input$uptype=='list'){
       return(input$target)
     }else if(input$uptype=='upload'){
-        fname <- unlist(lapply(1:as.integer(input$Nf),function(j){ 
-input[[paste0('file',j)]]$name}))
-        cat('fname=',fname,'\n')
-        f <- gsub('.dat','',fname)
+        fname <- unlist(lapply(1:length(input$files),function(j){ input$files[j]$name}))
+        f <- gsub('.([[:alpha:]]+)$','',fname)
         f <- gsub('_TERRA','',f)
         return(f)
     }
@@ -262,33 +251,35 @@ input[[paste0('file',j)]]$name}))
     ins <- instr()
     #input$show
     if(input$uptype=='upload'){
-      if(length(instr())>0){
-        tmp <- list(NA)
-        df <- rep(tmp,length(instr()))
-        names(df) <- target()#paste0(instr())
-        for(i in 1:length(instr())){
-          data.path <- input[[paste0('file',i)]]$datapath
-          tab <- read.table(data.path)
-          inds <- sort(tab[,1],index.return=TRUE)$ix
-          tab <- tab[inds,]
-          if(any(diff(tab[,1])==0)){
-              ind <- which(diff(tab[,1])==0)
-              tab <- tab[-ind,]
-          }
-          df[[i]] <- tab
-          if(ncol(df[[i]])==6 & ins[i]=='HARPS'){
-            colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index')#harps
-          }else if(ncol(df[[i]])==7 & ins[i]=='KECK'){
-            colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','Integration Time')#new keck
-          }else if(ncol(df[[i]])==6 & ins[i]=='KECK'){
-            colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','Integration Time')#old keck
-          }else if(ncol(df[[i]])==3){
-            colnames(df[[i]])=c('Time','RV','eRV')#other
-          }else{
-            colnames(df[[i]])=c('Time','RV','eRV',paste0('proxy',1:(ncol(df[[i]])-3)))#other
-          }
+        if(length(instr())>0){
+            tmp <- list(NA)
+            df <- rep(tmp,length(input$files[,1]))
+            ns <- c()
+            for(i in 1:length(input$files[,1])){
+                data.path <- input$files[[i,'datapath']]
+                ns <- c(ns,input$files[[i,'name']])
+                tab <- read.table(data.path)
+                inds <- sort(tab[,1],index.return=TRUE)$ix
+                tab <- tab[inds,]
+                if(any(diff(tab[,1])==0)){
+                    ind <- which(diff(tab[,1])==0)
+                    tab <- tab[-ind,]
+                }
+                df[[i]] <- tab
+                if(ncol(df[[i]])==6 & ins[i]=='HARPS'){
+                    colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index')#harps
+                }else if(ncol(df[[i]])==7 & ins[i]=='KECK'){
+                    colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','Integration Time')#new keck
+                }else if(ncol(df[[i]])==6 & ins[i]=='KECK'){
+                    colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','Integration Time')#old keck
+                }else if(ncol(df[[i]])==3){
+                    colnames(df[[i]])=c('Time','RV','eRV')#other
+                }else{
+                    colnames(df[[i]])=c('Time','RV','eRV',paste0('proxy',1:(ncol(df[[i]])-3)))#other
+                }
+            }
+            names(df) <- target()
         }
-      }
     }else if(input$uptype=='list'){
       if(is.null(input$target)) return()
       tmp <- list(NA)
@@ -364,14 +355,9 @@ input[[paste0('file',j)]]$name}))
     if(is.null(data())) return()
     if(input$show>0 & !is.null(data())){
     isolate({
-       tabs <- lapply(1:length(instr()),function(i){
-          if(input$uptype=='upload'){
-            output[[paste0('f',input$target[i])]] <- renderDataTable(data()[[i]])
-            tabPanel(target()[i],dataTableOutput(paste0('f',input$target[i])))
-          }else{
-            output[[paste0('f',input$target[i])]] <- renderDataTable(data()[[i]])
-            tabPanel(target()[i],dataTableOutput(paste0('f', input$target[i])))
-          }
+       tabs <- lapply(1:length(target()),function(i){
+            output[[paste0('f',target()[i])]] <- renderDataTable(data()[[i]])
+            tabPanel(target()[i],dataTableOutput(paste0('f',target()[i])))
         })
        do.call(tabsetPanel, tabs)
     })
@@ -416,7 +402,7 @@ input[[paste0('file',j)]]$name}))
         nam <- names[grep(input$scatter.target,names)]
         selectizeInput("xs", "Choose x axis", 
                        choices  = nam,
-                       selected = nam[grepl('Time',nam)],multiple=FALSE)
+                       selected = nam[1],multiple=FALSE)
     })
     
 
@@ -426,11 +412,13 @@ input[[paste0('file',j)]]$name}))
         nam <- names[grepl(input$scatter.target,names)]
         selectizeInput("ys", "Choose y axis", 
                        choices  = nam,
-                       selected = nam[grep(':RV$',nam)],multiple=FALSE)
+                       selected = nam[2],multiple=FALSE)
     })
    
     scatterInput <- function(){
         i <- 1
+        tar <- gsub(':.+','',input$xs[i])
+        vars <- colnames(data()[[tar]])
         instrument <- gsub(':.+','',input$xs[i])
         indx <- which(input$xs==ns.wt()$name)
         x <- gsub('.+:','',ns.wt()$label[indx])
@@ -441,15 +429,11 @@ input[[paste0('file',j)]]$name}))
         if(!grepl('RV|eRV|Time',input$xs[i])) varx <- scale(varx)
         if(!grepl('RV|eRV|Time',input$ys[i])) vary <- scale(vary)
         plot(varx,vary,xlab=x,ylab=y,pch=20,cex=0.5)
-#        legend('topright',legend=paste0('r=',format(cor(varx,vary),digit=3)),bty='n',cex=1.5)
-        if(grepl('RV',input$xs[i]) | grepl('RV',input$ys[i])){
-            eRV <- data()[[instrument]][,grep('eRV',colnames(data()[[instrument]]))]
-            if(grepl('RV',input$ys[i]) & grepl('Time',input$xs[i])){
-                arrows(varx,vary-eRV,varx,vary+eRV,length=0.03,angle=90,code=3)
-            }
-#else{
-#                arrows(varx-eRV,vary,varx+eRV,vary,length=0.03,angle=90,code=3)
-#            }
+        ey <- data()[[tar]][,3]
+        xname <- gsub('.+:','',input$xs[i])
+        yname <- gsub('.+:','',input$ys[i])
+        if(xname==vars[1] & yname==vars[2]){
+            arrows(varx,vary-ey,varx,vary+ey,length=0.03,angle=90,code=3)
         }
     }
   

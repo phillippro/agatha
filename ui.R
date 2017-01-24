@@ -16,7 +16,6 @@ shinyUI(fluidPage(
                                       choices=c('Select from the list'='list','Upload files'='upload'),  selected='list'),
 #                         uiOutput('select.type'),
                          uiOutput('files'),
-                         uiOutput('upfile'),
                          uiOutput('uptext'),
                          actionButton('show','upload and show data'),
                          uiOutput('download.data')
@@ -78,7 +77,7 @@ shinyUI(fluidPage(
                      headerPanel(''),
                      sidebarPanel(
                          uiOutput('per.target'),
-                         helpText("If more than one data sets are selected, only the MLP can be calculated for the combined data. To calculate the periodogram, the data sets are combined after subtracted by the best-fitted noise components."),
+                         helpText("If more than one data sets are selected, only the MLP can be calculated for the combined data. To calculate the periodogram, the data sets are combined after subtracting the best-fit noise components.."),
                          uiOutput('per.type'),
                          helpText("There could be errors in the calculation of the BFP if the data is small (e.g. less than 20 data points) or not well sampled. "),
                          uiOutput('nma'),
@@ -116,7 +115,7 @@ shinyUI(fluidPage(
                      headerPanel(''),
                      sidebarPanel(
                          uiOutput('per.target2'),
-                         helpText("If more than one data sets are selected, only the MLP-based 2D periodogram can be calculated for the combined data. To calculate the periodogram, the data sets are combined after subtracted by the best-fitted noise components."),
+                         helpText("If more than one data sets are selected, only the MLP-based 2D periodogram can be calculated for the combined data. To calculate the periodogram, the data sets are combined after subtracting the best-fitted noise components."),
                          uiOutput('per.type2'),
                          htmlOutput('text2D'),
                          tags$br(),
@@ -148,11 +147,11 @@ shinyUI(fluidPage(
                          uiOutput('download.per2D.plot'),
                          helpText("The users are encouraged to make their own plot of moving periodogram by downloading and using the relevant data. The first row is the centers of time windows. The first column is the periods, and the rest data is the matrix of periodogram powers."),
                          uiOutput('download.MP.data')
-                     ),
+                     ,width=6),
                      mainPanel(
 #                         plotOutput("per2", width = "750px", height = 400)
                          uiOutput("plot.2Dper"),
-                         htmlOutput("color")
+                         htmlOutput("color"),width=6
                      )
                  )
                  )
