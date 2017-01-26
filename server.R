@@ -65,7 +65,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     output$uptext <- renderUI({
         if(is.null(input$uptype)) return()
         if(input$uptype=='upload'){
-            helpText("The file name should be 'star_instrument.fmt' where 'fmt' could be any plain text format. The file should not contain column names. The first three columns should be observation times, observables (interpreted as RVs here) and measurement uncertainties, while the other columns are noise proxies.")
+            helpText("The file name should be 'star_instrument.fmt' where 'fmt' could be any plain text format. It is better to name the columns. Otherwise, the app will treat the data as radial velocity data. The first three columns should be observation times, observables (interpreted as RVs here) and measurement uncertainties, while the other columns are noise proxies.")
         }
     })
 
