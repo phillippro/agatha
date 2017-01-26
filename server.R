@@ -258,7 +258,12 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             for(i in 1:length(input$files[,1])){
                 data.path <- input$files[[i,'datapath']]
                 ns <- c(ns,input$files[[i,'name']])
-                tab <- read.table(data.path)
+                tab <- read.table(data.path,nrows=1)
+                if(class(data[1,1])=='factor'){
+                    tab <- read.table(data.path,header=TRUE) 
+                }else{
+                    tab <- read.table(data.path) 
+                }
                 inds <- sort(tab[,1],index.return=TRUE)$ix
                 tab <- tab[inds,]
                 if(any(diff(tab[,1])==0)){
@@ -266,61 +271,45 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                     tab <- tab[-ind,]
                 }
                 df[[i]] <- tab
-                if(ncol(df[[i]])==6 & ins[i]=='HARPS'){
-                    colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index')#harps
-                }else if(ncol(df[[i]])==7 & ins[i]=='KECK'){
-                    colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','Integration Time')#new keck
-                }else if(ncol(df[[i]])==6 & ins[i]=='KECK'){
-                    colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','Integration Time')#old keck
-                }else if(ncol(df[[i]])==3){
-                    colnames(df[[i]])=c('Time','RV','eRV')#other
-                }else{
-                    colnames(df[[i]])=c('Time','RV','eRV',paste0('proxy',1:(ncol(df[[i]])-3)))#other
+                if(is.null(tab)){
+                    if(ncol(df[[i]])==6 & ins[i]=='HARPS'){
+                        colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index')#harps
+                    }else if(ncol(df[[i]])==7 & ins[i]=='KECK'){
+                        colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','Integration Time')#new keck
+                    }else if(ncol(df[[i]])==6 & ins[i]=='KECK'){
+                        colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','Integration Time')#old keck
+                    }else if(ncol(df[[i]])==3){
+                        colnames(df[[i]])=c('Time','RV','eRV')#other
+                    }else{
+                        colnames(df[[i]])=c('Time','RV','eRV',paste0('proxy',1:(ncol(df[[i]])-3)))#other
+                    }
                 }
             }
             names(df) <- target()
         }
     }else if(input$uptype=='list'){
-      if(is.null(input$target)) return()
-      tmp <- list(NA)
-      df <- rep(tmp,length(input$target))
-      names(df) <- input$target
-      for(i in 1:length(input$target)){
-        target <- input$target[i]
-        star <- gsub('_.+','',target)
-        dir  <- 'data/'
-        f0 <- paste0(dir,target,'_TERRA.dat')
-        if(!file.exists(f0)){
-            f0 <- paste0(dir,target,'.dat')
+        if(is.null(input$target)) return()
+        tmp <- list(NA)
+        df <- rep(tmp,length(input$target))
+        names(df) <- input$target
+        for(i in 1:length(input$target)){
+            target <- input$target[i]
+            star <- gsub('_.+','',target)
+            dir  <- 'data/'
+            f0 <- paste0(dir,target,'_TERRA.dat')
+            if(!file.exists(f0)){
+                f0 <- paste0(dir,target,'.dat')
+            }
+            tab <- read.table(f0,header=TRUE,check.names=FALSE)
+            cat('colnames(tab)=',colnames(tab),'\n')
+            inds <- sort(tab[,1],index.return=TRUE)$ix
+            tab <- tab[inds,]
+            if(any(diff(tab[,1])==0)){
+                ind <- which(diff(tab[,1])==0)
+                tab <- tab[-ind,]
+            }
+            df[[i]] <- tab
         }
-        tab <- read.table(f0)
-        inds <- sort(tab[,1],index.return=TRUE)$ix
-        tab <- tab[inds,]
-        if(any(diff(tab[,1])==0)){
-            ind <- which(diff(tab[,1])==0)
-            tab <- tab[-ind,]
-        }
-        df[[i]] <- tab
-        if(ncol(df[[i]])==6){
-            colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index')
-        }else if(ncol(df[[i]])==18){
-          colnames(df[[i]])=c('Time','RV','eRV',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
-        }else if(ncol(df[[i]])==19){
-          colnames(df[[i]])=c('Time','RV','eRV','C3AP2-1',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
-      }else if(ncol(df[[i]])==20){
-          colnames(df[[i]])=c('Time','RV','eRV','Halpha','S-index',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
-      }else if(ncol(df[[i]])==22){
-          colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index','C3AP2-1',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
-      }else if(ncol(df[[i]])==21){
-          colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index',paste0('3AP',2:3,'-',1:2),paste0('6AP',2:6,'-',1:5),paste0('9AP',2:9,'-',1:8))#harps
-      }else if(ncol(df[[i]])==7 & instr()[i]=='KECK'){
-          colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','Integration Time')#new keck
-        }else if(ncol(df[[i]])==6 & instr()[i]=='KECK'){
-          colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','Integration Time')#old keck
-        }else{
-          colnames(df[[i]])=c('Time','RV','eRV')#other
-        }
-      }
     }
     return(df)
 })
