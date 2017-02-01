@@ -301,7 +301,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                 f0 <- paste0(dir,target,'.dat')
             }
             tab <- read.table(f0,header=TRUE,check.names=FALSE)
-            cat('colnames(tab)=',colnames(tab),'\n')
+#            cat('colnames(tab)=',colnames(tab),'\n')
             inds <- sort(tab[,1],index.return=TRUE)$ix
             tab <- tab[inds,]
             if(any(diff(tab[,1])==0)){
@@ -508,7 +508,12 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
           Nmas <- c()
           Inds <- list()
           for(i in 1:Ntarget()){
-              Inds <- c(Inds,as.integer(input[[paste0('Inds',i)]]))
+              inds <- as.integer(input[[paste0('Inds',i)]])
+              if(all(inds==0)){
+                  Inds <- c(Inds,list(inds))
+              }else{
+                  Inds <- c(Inds,list(inds[inds!=0]))
+              }
               Nmas <- c(Nmas,as.integer(input[[paste0('Nma',i)]]))
           }
           vals <- c(vals,Nmas=list(Nmas),Inds=list(Inds))
@@ -876,42 +881,4 @@ output$color <- renderUI({
         downloadButton('per2D.figure', 'Download 2D periodogram')
     })
 
-#########MCMC
-  output$nbin <- renderUI({
-    if(is.null(input$Nbin.per)) return()
-    isolate({
-      sliderInput("nbin.per", "Sampling over certain period range", min = 1, max = as.integer(input$Nbin.per), 
-                  value=1,step=1)
-    })
-  })
-  output$noise.type <- renderUI({
-    if(input$noise.model!='ARMA'){
-      return()
-    }else{
-        sliderInput("p", "Number of AR components", min = 0, max = 20, 
-                    value=0,step=1)
-        sliderInput("q", "Number of MA components", min = 0, max = 20, 
-                    value=1,step=1)
-      }
-    })
-  
-#####show the pdf
-  mcmc.file <- reactive({
-    if(is.null(input$run)) return()
-    isolate({
-      if(input$run>0){
-        MCMCpanel()
-      }
-    })
-  })
-
-  output$mcmcpanel <- renderImage({
-    if(is.null(mcmc.file()) | input$run<1) return()
-    isolate({
-      if(file.exists(paste0(mcmc.file()[1],mcmc.file()[2]))){
-              normalizePath(file.path(paste0('../',mcmc.file()[1]),
-                                            mcmc.file()[2]))
-      }
-    })
-    })
 })

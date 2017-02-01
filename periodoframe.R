@@ -9,6 +9,7 @@ RV.model <- function(par,data){
     Indices <- data$Indices
     Nma <- data$Nma
     NI <- data$NI
+#    cat('length(t),length(y),length(dy),dim(Indices),length(Nma),length(NI)=',length(t),length(y),length(dy),dim(Indices),length(Nma),length(NI),'\n')
     if(!any('A'==names(par))){
         A <- B <- phi <- omega <- 0
     }else{
@@ -57,9 +58,6 @@ me <- function(m,t,logtau,x){
     }else{
 #        unlist(lapply(1:length(m), function(i) m[i]*exp(-abs(t[-c(1:i)]-t[-(length(t)+1-c(1:i))])/exp(logtau))*x[-(length(x)+1-c(1:i))]))
     }
-}
-rv <- function(par,data){
-    RV.model(par,data)
 }
 rv.res <- function(par,data){
     y <- data$data[,2]
@@ -123,16 +121,16 @@ nlopt <- function(pars,type='noise',tol=1e-10){
 ###########
     out <- nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.res,data=df,control=nls.lm.control(maxiter=500))#ftol=1e-8
     opt.par <- pars <- as.list(coef(out))
-    yp.full <- rv(par=pars,data = df) 
+    yp.full <- RV.model(par=pars,data = df) 
     if(type=='period'){
         pars$A <- 0
         pars$B <- 0
-        yp.noise <- rv(par=pars,data=df)
+        yp.noise <- RV.model(par=pars,data=df)
     }else{
         yp.noise <- yp.full
     }
-    res <- y-yp.full
-    res.sig <- y-(yp.full-yp.noise)
+    res <- as.numeric(y-yp.full)
+    res.sig <- as.numeric(y-(yp.full-yp.noise))
     chi2 <- sum(res^2/dy^2)
     chi2.noise <- sum((y-yp.noise)^2/dy^2)
     logLmax <- sum(-res^2/(2*(opt.par$sj^2+dy^2))-0.5*log(2*pi)-0.5*log(opt.par$sj^2+dy^2))
@@ -153,8 +151,10 @@ rv.red <- function(par,df){
     dy <- data[,3]
     logtau <- par$logtau
     m <- c()
-    for(j in 1:Nma){
-        m <- c(m,par[[paste0('m',j)]])
+    if(Nma>0){
+        for(j in 1:Nma){
+            m <- c(m,par[[paste0('m',j)]])
+        }
     }
     sj <- par$sj
 #    cat('\nsj=',sj,'\n')
@@ -260,6 +260,7 @@ rv.red <- function(par,df){
             vec.rh <- c(YCp,YSp,YWp,YTp)
         }
     }
+#    cat('lin.mat=',lin.mat,'\n')
     white.par <- solve(lin.mat,vec.rh,tol=df$tol)#gamma,beta,dj
     ind0 <- length(white.par)-NI-1
     r <- white.par[ind0]+white.par[ind0+1]*t
@@ -377,7 +378,7 @@ rv.white <- function(par,df){
         }else{
             lin.mat <- rbind(lin.mat,c(CC,CS,C,CT))
             lin.mat <- rbind(lin.mat,c(CS,SS,S,ST))
-            lin.mat <- rbind(lin.mat,c(C,S,1,T))
+            lin.mat <- rbind(lin.mat,c(C,S,W,T))
             lin.mat <- rbind(lin.mat,c(CT,ST,T,TT))
             vec.rh <- c(YC,YS,Y,YT)
             white.par <- solve(lin.mat,vec.rh,tol=tol)#gamma,beta,dj
@@ -403,6 +404,7 @@ rv.red.res <- function(par,df){
     y <- df$data[,2]
     dy <- df$data[,3]
     if(df$Nma>0){
+#    if(df$Nma>-1){
         v <- rv.red(par,df)$v
     }else{
         v <- rv.white(par,df)$v
@@ -465,8 +467,12 @@ sopt <- function(pars,type='noise',tol=1e-10){
         par.up <- c(par.up,logtau=logtau.max)
     }
     names(par.up) <- names(par.low) <- names(start)
-    Ntry <- 1
-#    Ntry <- 5
+    if(Nma>0){
+        Ntry <- 1
+    }else{
+        Ntry <- 1
+    }
+#    Ntry <- 1
     tmp <- list()
     lls <- c()
     start0 <- start
@@ -477,7 +483,7 @@ sopt <- function(pars,type='noise',tol=1e-10){
             }else{
                 start <- as.list(rnorm(length(start),unlist(start0),as.numeric((par.up-par.low)/10)))
             }
-            if(all(unlist(start))<par.up & all(unlist(start))>par.low){
+            if(all(unlist(start)<par.up) & all(unlist(start)>par.low)){
                 names(start) <- names(par.low)
                 out <- try(nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500)),TRUE)#ftol=1e-16,ptol=1e-16
                 if(class(out)!='try-error'){
@@ -485,6 +491,7 @@ sopt <- function(pars,type='noise',tol=1e-10){
                     if(Nma>0){
                         val <- rv.red(par=opt.par,df = df)
                     }else{
+                        names(opt.par) <- names(par.low)
                         val <- rv.white(par=opt.par,df = df)
                     }
                     logLmax <- sum(-(y-val$v)^2/(2*(dy^2+opt.par$sj^2))-0.5*log(2*pi)-0.5*log((dy^2+opt.par$sj^2)))
@@ -527,14 +534,16 @@ sopt <- function(pars,type='noise',tol=1e-10){
     chi2 <- sum(res^2/dy^2)
     return(list(res=res,chi2=chi2,logLmax=logLmax,par=opt.par))#chi2.noise=chi2.noise
 }
-par.optimize <- function(data,Indices,NI,Nma,opt.type='wr',type='noise',omega=0,pars=NULL,tol=1e-10){
+par.optimize <- function(data,Indices,NI,Nma,opt.type='sl',type='noise',omega=0,pars=NULL,tol=1e-10){
 ###pars is a list containing different variables
 ###Indices include indices which linear correlate with y in the model
 ###data include t,y,dy
+    opt.type0 <- opt.type
     var <- names(pars)
     for(k in 1:length(var)){
         assign(var[k],pars[[var[k]]])
     }
+    opt.type <- opt.type0
     if(!exists('pars$Nma')){
         pars$Nma <- Nma
     }
@@ -759,7 +768,7 @@ global.notation <- function(t,y,dy,Indices,Nma,NI){
     Amin <- Bmin <- -2*(max(y)-min(y))
     Amax <- Bmax <- 2*(max(y)-min(y))
     Aini <- Bini <- (Amin+Amax)/2
-    vars <- unique(c('t','dy','err2','II','T','TT','TI','II','w','W','I','Y','YT','YI','Indices','y','logtau','omega','phi','m','xs','data','Amin','Bmin','Amax','Bmax','logtau.min','logtau.max','mmin','mmax','beta.min','beta.max','dmin','dmax','gamma.max','gamma.min','Aini','Bini','gamma.ini','beta.ini','dini','mini','logtau.ini','sj.ini','sj.max','sj.min'))
+    vars <- unique(c('t','dy','err2','II','T','TT','TI','II','w','W','I','Y','YT','YI','Indices','y','logtau','phi','m','xs','data','Amin','Bmin','Amax','Bmax','logtau.min','logtau.max','mmin','mmax','beta.min','beta.max','dmin','dmax','gamma.max','gamma.min','Aini','Bini','gamma.ini','beta.ini','dini','mini','logtau.ini','sj.ini','sj.max','sj.min'))
     pars <- list()
     for(k in 1:length(vars)){
         if(exists(vars[k])){
@@ -775,7 +784,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     unit <- 1
     if(all(Inds==0)){
         NI <- 0
-        Indices <- NA
+#        Indices <- NA
     }else{
         NI <- length(Inds)
         if(!is.null(Indices)){
@@ -875,6 +884,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
         logBF.noise[kk] <- logL1-logL0
         logBF[kk] <- logL-logL0
     }
+
     P <- unit/f
     ind <- which(logBF>(max(logBF)+log(0.01)))
     Popt <- (unit/f)[ind]
@@ -886,7 +896,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     var.new <- c(vars,tmp)
 #    var.new$y <- y0
     data[,2] <- y0
-    tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='nl',type='period',omega=omega.opt,pars=var.new,tol=tol)
+    tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='nl',type='period',pars=var.new,tol=tol)
     opt.par <- tmp$par
 #    cat('names(opt.par)=',names(opt.par),'\n')
 #    cat('opt.par=',unlist(opt.par),'\n')
@@ -1157,7 +1167,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     d <- rep(vars$dini,NI)
     tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='nl',type='noise',pars=vars,tol=tol)
 #####optimize multiple times just to get global maximum likelihood for the noise model
-    for(j in 1:5){
+    for(j in 1:2){
         opt.par.out <- opt.par <- tmp$par
         cor.max <- 0
         vars$sj.ini <- sj <- opt.par$sj
@@ -1180,7 +1190,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
             d <- 0
         }
 #####optimize again using the optimized parameter as initial conditions
-        tmp <- par.optimize(data,Indices,NI,Nma,opt.type='sl',type='noise',pars=vars,tol=tol)
+        tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='nl',type='noise',pars=vars,tol=tol)
         chi2.ref <- tmp$chi2
         logLmax0 <- tmp$logLmax
     }
@@ -1302,7 +1312,6 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
             }else if(per.type=='MLP'){
                 tmp <- MLP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=Indices[inds,],...)
             }else if(per.type=='BFP'){
-                cat('length(inds)=',length(inds),'\n')
                 tmp <- BFP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=Indices[inds,],...)
             }else if(per.type=='LS'){
                 tmp <- lsp(times=t[inds],x=y[inds],ofac=ofac,from=fmin,to=fmax,tspan=Dt,alpha=c(0.1,0.01,0.001))

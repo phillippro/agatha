@@ -5,15 +5,12 @@ source('periodograms.R')#for other periodograms
 ############################################
 #####PartIV: make PeriodoFrame
 ############################################
-#per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
-per.types <- c('MLP')
 if(NI>0){
     Inds <- 1:NI
 }else{
     Inds <- 0
 }
 inds <- 1:2
-sequential <- TRUE
 fname <- paste0('periodograms_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'modeltype',model.type,'_',star,'_NI',NI,'Nma',Nma,'_Nc',Nc,'_ofac',ofac,'_opt',opt.type,'_Nap',Nap)
 fname <- paste0('results/',fname)
 ######plot
@@ -206,12 +203,11 @@ if(sequential){
             ind <- 1
             abline(v=per$ps[ind],col='red',lty=3,lwd=2)
         }
-        if(length(ind)>1){
+        if(length(ind)>0){
             text(x=per$ps[ind],y=per$power.opt[ind],pos=c(2,4),labels=paste0(format(per$ps[ind],digit=3),'d'),col='red')
         }else{
             text(x=per$ps[ind],y=per$power.opt[ind],pos=4,offset=-0.1,labels=paste0(format(per$ps[ind],digit=3),'d'),col='red')
         }
-
         if(per.type=='BFP' | per.type=='MLP'){
             if(per.type=='BFP' & all(per$logBF.opt<log(150)))
                 break()
