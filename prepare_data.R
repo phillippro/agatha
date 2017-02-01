@@ -2,8 +2,8 @@ library(shiny)
 ############################################
 #####PartI: set parameters
 ############################################
-star <- 'ChallengeDataSet10'
-#star <- 'HD41248'
+#star <- 'ChallengeDataSet10'
+star <- 'HD41248'
 #star <- 'HD172555'
 np <- 0
 NI <- 0

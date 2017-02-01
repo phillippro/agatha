@@ -745,7 +745,7 @@ global.notation <- function(t,y,dy,Indices,Nma,NI){
     gamma.min <- min(y)
     gamma.max <- max(y)
     gamma.ini <- (gamma.min+gamma.max)/2
-    if(!is.null(Indices)){
+    if(NI>0){
         dmin <- -2*(max(y)-min(y))/(max(Indices)-min(Indices))
         dmax <- 2*(max(y)-min(y))/(max(Indices)-min(Indices))
         dini <- rep((dmin+dmax)/2,1)
@@ -787,7 +787,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
 #        Indices <- NA
     }else{
         NI <- length(Inds)
-        if(!is.null(Indices)){
+        if(NI>0){
             if(NI<2){
                 Indices <- matrix(Indices[,Inds],ncol=1)
             }else{
@@ -1035,7 +1035,6 @@ BFP.comp <- function(t, y, dy, Nmas,NI.inds=NULL,Indices=NULL){
     t <- t-min(t)
     Ndata <- length(t)
     #######define notations and variables 
-#    cat('classIndices=',Indices,'\n')
     if(is.null(NI.inds)){
         vars <- global.notation(t,y,dy,Indices=Indices,Nma=0,NI=0)
     }else{
@@ -1076,7 +1075,7 @@ combine.data <- function(data,Ninds,Nmas){
 #            Indices <- NA
         }else{
             NI <- length(Inds)
-            if(!is.null(Indices)){
+            if(NI>0){
                 if(NI<2){
                     Indices <- matrix(Indices[,Inds],ncol=1)
                 }else{
@@ -1104,7 +1103,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
         Indices <- NA
     }else{
         NI <- length(Inds)
-        if(!is.null(Indices)){
+        if(NI>0){
             if(NI<2){
                 Indices <- matrix(Indices[,Inds],ncol=1)
             }else{
@@ -1303,6 +1302,11 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
             cat(paste0(Dt,'d window'),j+1,'/',nbin,'\n')
             incProgress(1/nbin, detail = paste0('window ',j+1,'/',nbin))
             inds <- which(t>=min(t)+j*dt & t<min(t)+j*dt+Dt)
+            if(any(is.na(Indices)) | is.null(Indices)){
+                index <- Indices
+            }else{
+                index <- Indices[inds,]
+            }
             if(per.type=='BGLS'){
                 tmp <- bgls(t=t[inds],y=y[inds],err=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt)
             }else if(per.type=='GLS'){
@@ -1310,9 +1314,9 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
             }else if(per.type=='GLST'){
                 tmp <- glst(t=t[inds],y=y[inds],err=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt)
             }else if(per.type=='MLP'){
-                tmp <- MLP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=Indices[inds,],...)
+                tmp <- MLP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,...)
             }else if(per.type=='BFP'){
-                tmp <- BFP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=Indices[inds,],...)
+                tmp <- BFP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,...)
             }else if(per.type=='LS'){
                 tmp <- lsp(times=t[inds],x=y[inds],ofac=ofac,from=fmin,to=fmax,tspan=Dt,alpha=c(0.1,0.01,0.001))
                 ps <- 1/tmp$scanned
@@ -1337,5 +1341,59 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
             ndata[j+1] <- length(inds)
         }
     })
+    return(list(tmid=tmid,P=tmp$P[index],powers=powers,rel.powers=rel.powers,ndata=ndata))
+}
+
+####MP without progress
+MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,per.type='MLP',...){
+    n <- nbin-1
+    dt <- (max(t)-min(t)-Dt)/n
+    tstart <- min(t)+(0:n)*dt
+    tend <- min(t)+(0:n)*dt+Dt
+    tmid <- (tstart+tend)/2
+    df <- 1/(Dt*ofac)
+    rel.powers <- powers <- array(data=NA,dim=c((fmax-fmin)/df+1,nbin))
+    ndata <- rep(NA,nbin)
+        for(j in 0:n){
+            cat(paste0(Dt,'d window'),j+1,'/',nbin,'\n')
+            inds <- which(t>=min(t)+j*dt & t<min(t)+j*dt+Dt)
+            if(any(is.na(Indices)) | is.null(Indices)){
+                index <- Indices
+            }else{
+                index <- Indices[inds,]
+            }
+            if(per.type=='BGLS'){
+                tmp <- bgls(t=t[inds],y=y[inds],err=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt)
+            }else if(per.type=='GLS'){
+                tmp <- gls(t=t[inds],y=y[inds],err=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt)
+            }else if(per.type=='GLST'){
+                tmp <- glst(t=t[inds],y=y[inds],err=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt)
+            }else if(per.type=='MLP'){
+                tmp <- MLP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,...)
+            }else if(per.type=='BFP'){
+                tmp <- BFP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,...)
+            }else if(per.type=='LS'){
+                tmp <- lsp(times=t[inds],x=y[inds],ofac=ofac,from=fmin,to=fmax,tspan=Dt,alpha=c(0.1,0.01,0.001))
+                ps <- 1/tmp$scanned
+                pps <- tmp$power
+                inds <- sort(ps,index.return=TRUE,decreasing=TRUE)$ix
+                tmp[['power']] <- pps[inds]
+                tmp[['P']] <- ps[inds]
+            }
+            if(per.type!='MLP' & per.type!='BFP'){
+                index <- sort(tmp$P,index.return=TRUE)$ix
+                ##scaling the power
+                if(nrow(rel.powers)!=length(index)){
+                    rel.powers <- powers <- array(data=NA,dim=c(length(index),nbin))
+                }
+                rel.powers[,j+1] <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
+                powers[,j+1] <- tmp$power[index]
+            }else{
+                index <- sort(tmp$P,index.return=TRUE)$ix
+                powers[,j+1] <- tmp$logBF[index]
+                rel.powers[,j+1] <- (tmp$logBF[index]-mean(tmp$logBF[index]))/(max(tmp$logBF[index])-mean(tmp$logBF[index]))
+            }
+            ndata[j+1] <- length(inds)
+        }
     return(list(tmid=tmid,P=tmp$P[index],powers=powers,rel.powers=rel.powers,ndata=ndata))
 }

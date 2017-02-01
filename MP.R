@@ -2,21 +2,26 @@ library(fields)
 library(magicaxis)
 #library(grDevices)
 library(minpack.lm)
-#source('periodoframe.R')
+source('periodoframe.R')
 #source('periodograms.R')
 source('prepare_data.R',local=TRUE)
 ########################################
 #####part I: making MP
 ########################################
 ###parameters setting
-Dt <- 2000#time span of the time window
+if(NI>0){
+    Inds <- 1:NI
+}else{
+    Inds <- 0
+}
+Dt <- 1000#time span of the time window
 Nbin <- 10#the steps required to cover the whole data baseline by moving the window
 ofac0 <- 1#over sampling factor
-per.type <- 'BFP'##type of moving periodogram: 'MLP' or 'BFP' or 'gls' or 'bgls'
+per.type <- 'MLP'##type of moving periodogram: 'MLP' or 'BFP' or 'gls' or 'bgls'
 fmax <- 0.1#truncate to Pmin=10d
 #fmax <- 1
 t1 <- proc.time()
-mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac0,fmax=fmax,per.type=per.type,sj=0,Nma=Nma,NI=NI,tol=1e-12)
+mp <- MP.norm(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac0,fmax=fmax,per.type=per.type,sj=0,Nma=Nma,Inds=Inds,tol=1e-16)
 t2 <- proc.time()
 dur <- format((t2-t1)[3],digit=3)
 cat('computation time for MP:', dur,'s\n')

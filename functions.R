@@ -280,7 +280,7 @@ per2D.data <- function(vars,per.par,data){
     y <- tab[,2]
     dy <- tab[,3]
     if(length(per.target)==1){
-        mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nma,Inds=Inds,tol=1e-16,Indices=Indices)
+        mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nma,Inds=Inds,tol=1e-18,Indices=Indices)
     }else{
         mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=0,Inds=0,tol=1e-16,Indices=Indices)
     }

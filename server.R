@@ -343,7 +343,6 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             if(is.null(data())) return()
                 isolate({
                     tabs <- lapply(1:length(target()),function(i){
-                        cat('names(output)=',names(output),'\n')
                         output[[paste0('f',target()[i])]] <- renderDataTable(data()[[i]])
                         tabPanel(target()[i],dataTableOutput(paste0('f',target()[i])))
                     })
@@ -357,7 +356,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     nam <- c()
     for(i in 1:length(instr())){
       names <- colnames(data()[[i]])
-      names <- names[names!='Time' & names!='eRV']
+      names <- names[-c(1,3)]#Time and eRV
       names <- c(names,'Window Function')
 #      nam <- c(nam,paste(names(data())[i],names,sep=':'))
       nam <- c(nam,names)
@@ -372,7 +371,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         labs <- names <- colnames(data()[[i]])
         labs[grep('RV',names)] <- 'RV [m/s]'
         labs[grep('Time',names)] <- 'Time [JD-2400000]'
-        labs[!grepl('RV',names) & !grepl('eRV',names) & !grepl('Time',names)] <- paste('Normalized',labs[!grepl('RV',names) & !grepl('eRV',names) & !grepl('Time',names)])
+        labs[!grepl('Time|RV|eRV|V1|V2|V3',names)] <- paste('Normalized',labs[!grepl('Time|RV|eRV|V1|V2|V3',names)])
         nam <- c(nam,paste(names(data())[i],names,sep=':'))
         lab <- c(lab,paste(names(data())[i],labs,sep=':'))
       }
@@ -414,8 +413,8 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         y <- gsub('.+:','',ns.wt()$label[indy])
         varx <- data()[[instrument]][,gsub('.+:','',input$xs[i])]
         vary <- data()[[instrument]][,gsub('.+:','',input$ys[i])]
-        if(!grepl('RV|eRV|Time',input$xs[i])) varx <- scale(varx)
-        if(!grepl('RV|eRV|Time',input$ys[i])) vary <- scale(vary)
+        if(!grepl('RV|eRV|Time|V1|V2|V3',input$xs[i])) varx <- scale(varx)
+        if(!grepl('RV|eRV|Time|V1|V2|V3',input$ys[i])) vary <- scale(vary)
         plot(varx,vary,xlab=x,ylab=y,pch=20,cex=0.5)
         ey <- data()[[tar]][,3]
         xname <- gsub('.+:','',input$xs[i])
@@ -464,19 +463,19 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         if(is.null(input$per.type)) return()
 #        cat('ns()=',ns(),'\n')
         if(!any(grepl('MLP',input$per.type)) & !any(grepl('BFP',input$per.type))){
-            selectInput("yvar", "Choose observables", choices  = ns(),selected = ns()[grepl('RV',ns())],multiple=TRUE)         
+            selectInput("yvar", "Choose observables", choices  = ns(),selected = ns()[1],multiple=TRUE)         
         }else{
             selectInput("yvar", "Choose observables", 
-                        choices  = ns()[grepl('RV',ns())],
-                        selected = ns()[grepl('RV',ns())],multiple=FALSE)    
+                        choices  = ns()[1],
+                        selected = ns()[1],multiple=FALSE)    
         }
     })
 
   output$var2 <- renderUI({
       if(is.null(input$per.type2)) return()
       selectInput("yvar2", "Choose observables", 
-                  choices  = ns()[grepl('RV',ns())],
-                    selected = ns()[grepl('RV',ns())],multiple=FALSE)    
+                        choices  = ns()[1],
+                        selected = ns()[1],multiple=FALSE)     
   })
 
   output$helpvar <- renderUI({
