@@ -259,7 +259,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                 data.path <- input$files[[i,'datapath']]
                 ns <- c(ns,input$files[[i,'name']])
                 tab <- read.table(data.path,nrows=1)
-                if(class(data[1,1])=='factor'){
+                if(class(tab[1,1])=='factor'){
                     tab <- read.table(data.path,header=TRUE) 
                 }else{
                     tab <- read.table(data.path) 
@@ -314,8 +314,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     return(df)
 })
 
-    observe({
-#        if(is.null(data())) return()
+    observeEvent(input$show,{
         lapply(1:length(data()),function(j)
             output[[paste0('data.out',j)]] <- downloadHandler(
                 filename = function() {
@@ -339,19 +338,19 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             })
     })
 
-  output$tab <- renderUI({
-    input$show
-    if(is.null(data())) return()
-    if(input$show>0 & !is.null(data())){
-    isolate({
-       tabs <- lapply(1:length(target()),function(i){
-            output[[paste0('f',target()[i])]] <- renderDataTable(data()[[i]])
-            tabPanel(target()[i],dataTableOutput(paste0('f',target()[i])))
+    observeEvent(input$show,{
+        output$tab <- renderUI({
+            if(is.null(data())) return()
+                isolate({
+                    tabs <- lapply(1:length(target()),function(i){
+                        cat('names(output)=',names(output),'\n')
+                        output[[paste0('f',target()[i])]] <- renderDataTable(data()[[i]])
+                        tabPanel(target()[i],dataTableOutput(paste0('f',target()[i])))
+                    })
+                    do.call(tabsetPanel, tabs)
+                })
         })
-       do.call(tabsetPanel, tabs)
     })
-    }
-  })
 
 ###variable names
   ns <- reactive({
