@@ -7,11 +7,12 @@ The shiny app of Agatha is available [here](https://phillippro.shinyapps.io/Agat
 If you use Agatha in your work, please cite **"Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangle periodic signals from correlated noise in a periodogram framework, submitted to MNRAS"**
 
 ### use the app locally
-If you want to use the app locally, you download the whole GitHub repository to a local directory. Then you should install R and R packages. The user should install packages 'shiny','magicaxis','minpack.lm' and 'fields'. For example,
+If you want to use the app locally, you download the whole GitHub repository to a local directory. Then you should install R and R packages. If you have already have R installed, 
+please install packages with the following command:
 ```
-install.packages('shiny')
+install.packages('shiny','magicaxis','minpack.lm','fields')
 ```
-. To run the app locally, the user should go to the directory where the ui.R and server.R files are, and type "R" to enter the R console, and then run the app 
+To run the app locally, the user should go to the directory where the ui.R and server.R files are, and type "R" to enter the R console, and then run the app 
 using the following commands:
 ```
 library(shiny)

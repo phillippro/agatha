@@ -10,8 +10,7 @@ source("mcmc_func.R",local=TRUE)
 source('functions.R',local=TRUE)
 Nmax.plots <- 50
 count0 <- 0
-instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK','APF','PFS')
-data.files <- list.files(path='data',full.name=FALSE)
+instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK')
 
 shinyServer(function(input, output, session) {
 ####select from list
@@ -55,7 +54,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     if(is.null(input$uptype)) return()
     if(input$uptype=='list'){
         selectizeInput('target','Select data files from the list',
-                  choices=gsub('\\..+','',gsub('_TERRA.+','',list.files('data',
+                  choices=gsub('.dat','',gsub('_TERRA.+','',list.files('data',
                                     full.names=FALSE))),multiple=TRUE)
     }else if(input$uptype=='upload'){
         fileInput('files', 'Choose files', multiple=TRUE) 
@@ -162,14 +161,14 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     output$Inds <- renderUI({
         if(is.null(input$per.type) | is.null(data()) | is.null(Ntarget())) return()
         lapply(1:Ntarget(),function(i){
-            selectInput(paste0('Inds',i),paste('Noise proxies for',input$per.target[i]),choices = 0:NI.max()[input$per.target[i]],selected = 0,multiple=TRUE)
+            selectInput(paste0('Inds',i),paste('Noise proxies for',input$per.target[i]),choices = 0:NI.max()[i],selected = 0,multiple=TRUE)
         })
     })
 
     output$Inds2 <- renderUI({
         if(is.null(data()) | is.null(input$per.target2)) return()
         lapply(1:Ntarget2(),function(i){
-            selectInput(paste0("Inds2.",i),paste('Noise proxies for',input$per.target2[i]),choices = 0:NI.max()[input$per.target2[i]],selected = 0,multiple=TRUE)
+            selectInput(paste0("Inds2.",i),paste('Noise proxies for',input$per.target2[i]),choices = 0:NI.max()[i],selected = 0,multiple=TRUE)
         })
     })
     
@@ -276,9 +275,9 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                     if(ncol(df[[i]])==6 & ins[i]=='HARPS'){
                         colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index')#harps
                     }else if(ncol(df[[i]])==7 & ins[i]=='KECK'){
-                        colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','ObservationTimes')#new keck
+                        colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','Integration Time')#new keck
                     }else if(ncol(df[[i]])==6 & ins[i]=='KECK'){
-                        colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','ObservationTimes')#old keck
+                        colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','Integration Time')#old keck
                     }else if(ncol(df[[i]])==3){
                         colnames(df[[i]])=c('Time','RV','eRV')#other
                     }else{
@@ -297,9 +296,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             target <- input$target[i]
             star <- gsub('_.+','',target)
             dir  <- 'data/'
-            ind <- grep(target,data.files)
-            file <- data.files[ind[1]]
-            f0 <- paste0(dir,file)
+            f0 <- paste0(dir,target,'_TERRA.dat')
             if(!file.exists(f0)){
                 f0 <- paste0(dir,target,'.dat')
             }
@@ -604,8 +601,8 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         logBF <- data.frame(round(out$logBF,digit=1))
         colnames(logBF) <- col.names
         rownames(logBF) <- row.names
-#        cat('colnames(logBF)=',colnames(logBF),'\n')
-#        cat('rownames(logBF)=',rownames(logBF),'\n')
+        cat('colnames(logBF)=',colnames(logBF),'\n')
+        cat('rownames(logBF)=',rownames(logBF),'\n')
         logBF.download <- logBF
         colnames(logBF.download) <- paste0('MA',out$Nmas)
         rnames <- c()
@@ -746,6 +743,7 @@ output$color <- renderUI({
   per1D.data <- eventReactive(input$plot1D,{
 #      reactive({
 #function(){
+      cat('periodogram.var()=',periodogram.var(),'\n')
           calc.1Dper(Nmax.plots, periodogram.var(),per.par(),data())
   })
     
@@ -753,7 +751,7 @@ output$color <- renderUI({
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram1D_', f2, '.txt', sep='')
+            paste('periodogram1D-', f2, '.txt', sep='')
         },
         content = function(file) {
             tab <- per1D.data()$per.data
@@ -770,7 +768,7 @@ output$color <- renderUI({
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram1D_', f2, '.pdf', sep='')
+            paste('periodogram1D-', f2, '.pdf', sep='')
         },
       content = function(file) {
         pdf(file,8,8)
@@ -790,7 +788,7 @@ output$color <- renderUI({
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram1D_individual_', f2, '.pdf', sep='')
+            paste('periodogram1D-individual-', f2, '.pdf', sep='')
         },
       content = function(file) {
         pdf(file,4,4)
@@ -831,7 +829,7 @@ output$color <- renderUI({
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram2D_', f2, '.txt', sep='')
+            paste('periodogram2D-', f2, '.txt', sep='')
         },
         content = function(file) {
             tmp <- MP.data()
@@ -869,7 +867,7 @@ output$color <- renderUI({
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram2D_', f2, '.pdf', sep='')
+            paste('periodogram2D-', f2, '.pdf', sep='')
         },
         content = function(file) {
             pdf(file,8,8)
