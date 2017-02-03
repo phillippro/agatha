@@ -561,7 +561,6 @@ par.optimize <- function(data,Indices,NI,Nma,opt.type='sl',type='noise',omega=0,
         Nrep <- 2
     }
     xs <- array(0,dim=c(1,length(t)))
-    
     for(ii in 1:Nrep){
 ########linear optimization
         if(opt.type=='l'){
@@ -766,7 +765,7 @@ global.notation <- function(t,y,dy,Indices,Nma,NI){
     Amin <- Bmin <- -2*(max(y)-min(y))
     Amax <- Bmax <- 2*(max(y)-min(y))
     Aini <- Bini <- (Amin+Amax)/2
-    vars <- unique(c('t','dy','err2','II','T','TT','TI','II','w','W','I','Y','YT','YI','Indices','y','logtau','phi','m','xs','data','Amin','Bmin','Amax','Bmax','logtau.min','logtau.max','mmin','mmax','beta.min','beta.max','dmin','dmax','gamma.max','gamma.min','Aini','Bini','gamma.ini','beta.ini','dini','mini','logtau.ini','sj.ini','sj.max','sj.min'))
+    vars <- unique(c('t','dy','err2','II','T','TT','TI','II','w','W','I','Y','YT','YI','data','Indices','y','logtau','phi','m','xs','Amin','Bmin','Amax','Bmax','logtau.min','logtau.max','mmin','mmax','beta.min','beta.max','dmin','dmax','gamma.max','gamma.min','Aini','Bini','gamma.ini','beta.ini','dini','mini','logtau.ini','sj.ini','sj.max','sj.min'))
     pars <- list()
     for(k in 1:length(vars)){
         if(exists(vars[k])){
@@ -937,7 +936,6 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
         nma <- Nmas[i]
         for(j in 1:length(NI.inds)){
             incProgress(1/(length(Nmas)*length(NI.inds)), detail = paste("MA:", nma,'; Proxies:',paste(NI.inds[[j]],collapse=',')))
-            cat('NI.inds[[j]]=',NI.inds[[j]],'\n')
             if(!all(NI.inds[[j]]==0)){
                 ni <- length(NI.inds[[j]])
                 Inds <- NI.inds[[j]]
@@ -953,9 +951,7 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
             }
             Ntry <- 10*(round(ni/3)+2*nma)
             lls <- c()
-            vars$NI <- ni
-            vars$Nma <- nma
-            vars$Indices <- indices
+            vars <- global.notation(t,y,dy,Indices=indices,Nma=nma,NI=ni)
             tmp <- par.optimize(data,Indices=indices,NI=ni,Nma=nma,opt.type='nl',type='noise',pars=vars,tol=tol)
             ps.opt <- c(logtau=vars$logtau.ini,m=vars$mini,d=vars$dini,sj=vars$sj.ini)
             pp <- tmp$par
@@ -984,6 +980,8 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
                         }
                     }
                     vars$sj.ini <- runif(1,sj.min,sj.max)
+                    vars$NI <- ni
+                    vars$Indices <- indices
                     tmp <- try(par.optimize(data,Indices=indices,NI=ni,Nma=nma,opt.type='nl',type='noise',pars=vars,tol=tol))
                     if(class(tmp)!='try-error'){
                         if(tmp$logLmax>max(lls)){

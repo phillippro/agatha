@@ -300,7 +300,6 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             ind <- grep(target,data.files)
             file <- data.files[ind[1]]
             f0 <- paste0(dir,file)
-            cat('f0=',f0,'\n')
             if(!file.exists(f0)){
                 f0 <- paste0(dir,target,'.dat')
             }
@@ -511,7 +510,6 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
           Inds <- list()
           for(i in 1:Ntarget()){
               inds <- as.integer(input[[paste0('Inds',i)]])
-              cat('inds=',inds,'\n')
               if(all(inds==0)){
                   Inds <- c(Inds,list(inds))
               }else{
@@ -606,8 +604,8 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         logBF <- data.frame(round(out$logBF,digit=1))
         colnames(logBF) <- col.names
         rownames(logBF) <- row.names
-        cat('colnames(logBF)=',colnames(logBF),'\n')
-        cat('rownames(logBF)=',rownames(logBF),'\n')
+#        cat('colnames(logBF)=',colnames(logBF),'\n')
+#        cat('rownames(logBF)=',rownames(logBF),'\n')
         logBF.download <- logBF
         colnames(logBF.download) <- paste0('MA',out$Nmas)
         rnames <- c()
