@@ -9,7 +9,7 @@ If you use Agatha in your work, please cite **"Feng F., Tuomi M., Jones H. R. A.
 ### use the app locally
 If you want to use the app locally, you download the whole GitHub repository to a local directory. Then you should install R and R packages. The user should install packages 'shiny', 'magicaxis', 'minpack.lm' and 'fields'. For example,
 ```
-install.packages(c('shiny','magicaxis','minpack.lm','fields'))
+install.packages('shiny')
 ```
 . To run the app locally, the user should go to the directory where the ui.R and server.R files are, and type "R" to enter the R console, and then run the app 
 using the following commands:
