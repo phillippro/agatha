@@ -3,11 +3,12 @@ library(shiny)
 #####PartI: set parameters
 ############################################
 #star <- 'ChallengeDataSet10'
-star <- 'HD41248'
+#star <- 'HD41248'
+star <- 'GJ699'
 #star <- 'HD172555'
 np <- 0
-NI <- 0
-Nma <- 0
+NI <- 1
+Nma <- 1
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
 #model.type <- 'auto'#manually setting the number of MA components and differential RVs
 model.type <- 'man'#automatically determine the optimal noise model

@@ -443,8 +443,10 @@ sopt <- function(pars,type='noise',tol=1e-10){
                 si <- c(rep(0,i),sin(omega*t[-(length(t)+1-(1:i))]))
                 ss <- rbind(ss,si)
             }
-            if(NI>0){
-                Is[i,,] <- cbind(matrix(rep(0,i*NI),nrow=NI),Indices[1:NI,-(length(t)+1-(1:i))])
+            if(NI==1){
+                Is[i,,] <- c(rep(0,i*NI),Indices[1,-(length(t)+1-(1:i))])
+            }else{
+                Is[i,,] <- c(matrix(rep(0,i*NI),nrow=NI),Indices[1:NI,-(length(t)+1-(1:i))])
             }
         }
     }
@@ -1110,6 +1112,8 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
             }
         }
     }
+    cat('class(Indices)=',class(Indices),'\n')
+    cat('dim(Indices)=',dim(Indices),'\n')
     if(NI==0) d <- 0
     if(Nma==0) m <- 0
     if(is.null(tspan)){

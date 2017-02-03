@@ -325,7 +325,11 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
             Indices <- data[,4:ncol(data)]
             cors <- c()
             for(j in 1:ncol(Indices)){
+                if(sd(Indices[,j])==0){
+                cors <- c(cors,0)
+                }else{
                 cors <- c(cors,abs(cor(Indices[,j],y)))
+                }
             }
             inds <- sort(cors,decreasing=TRUE,index.return=TRUE)$ix
             if(Nproxy>Nbasic){
