@@ -48,7 +48,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             }
         }
     }
-    Nvar <- min(length(pars),Nmax.plots)      
+    Nvar <- min(length(pars),Nmax.plots)
     sig.levels <- c()
     cnames <- c()
     pers <- c()
@@ -89,7 +89,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             dy <- tab[,3]
         }else{
             dy <- rep(0.1,nrow(tab))
-        } 
+        }
         if(ypar!='Window Function'){
             y <- tab[,ypar]
             if(per.type=='GLST'){
@@ -190,7 +190,7 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
         inds <- 1:(ncol(per.data)-1)
         titles <- tits
     }
-    for(i in inds){ 
+    for(i in inds){
         power <- per.data[,i+1]
         ylab <- ylabs[i]#gsub('.+:','',colnames(per.data)[i+1])
         per.type <- gsub('[[:digit:]]signal:.+','',colnames(per.data)[i+1])
@@ -207,10 +207,10 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
             power.max <- p[2]
         }else{
             pmaxs <- p[,1]
-            power.max <- p[,2]           
+            power.max <- p[,2]
             if(length(pmaxs)>4){
                 pmaxs <- p[1:2,1]
-                power.max <- p[1:2,2]           
+                power.max <- p[1:2,2]
             }
         }
         if(length(pmaxs)>0){
@@ -345,7 +345,7 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
                 NI.inds[[1]] <- 0
             }
             groups <- sort(as.integer(groups))
-            for(j in 1:length(groups)){  
+            for(j in 1:length(groups)){
                 if(j==1){
                     NI.inds[[j+1]] <- 1:groups[j]
                 }else{
@@ -394,7 +394,36 @@ MCMC.panel <- function(){
         cat('args=',c(id,Niter,Nbin.per,nbin.per,tem,inicov,Pini,noise.model,period.par,Ncores,Np,mode,Dtype,Nw,prior.type,calibration)
            ,'\n')
         c(id,Niter,Nbin.per,nbin.per,tem,inicov,Pini,noise.model,period.par,Ncores,Np,mode,Dtype,Nw,prior.type,calibration)
-    } 
+    }
     source('../mcmc_red.R',local=TRUE)
     return(list(folder=folder,pdf=gsub('.+/','',pdf.name)))
+}
+data.distr <- function(x,xlab,ylab,main='',oneside=FALSE,plotf=TRUE){
+    xs <- seq(min(x),max(x),length.out=1e3)
+    fitnorm <- fitdistr(x,"normal")
+    p <- hist(x,plot=FALSE)
+    xfit <- length(x)*mean(diff(p$mids))*dnorm(xs,fitnorm$estimate[1],fitnorm$estimate[2])
+    ylim <- range(xfit,p$counts)
+    if(plotf){
+        plot(p,xlab=xlab,ylab=ylab,main=main,ylim=ylim)
+        lines(xs,xfit,col='red')
+    }
+    x1=Mode(x)
+    x2=mean(x)
+    x3=sd(x)
+    x4=skewness(x)
+    x5=kurtosis(x)
+    xs = sort(x)
+    x1per = max(min(xs),xs[floor(length(xs)*0.01)])
+    x99per = min(xs[ceiling(length(xs)*0.99)],max(xs))
+#    abline(v=c(x1per,x99per),col='blue')
+    if(plotf){
+        if(!oneside){
+            legend('topleft',legend=c(as.expression(bquote('mode ='~.(format(x1,digit=3)))),as.expression(bquote(mu~'='~.(format(x2,digit=3)))),as.expression(bquote(sigma~'='~.(format(x3,digit=3))))),bty='n')
+            legend('topright',legend=c(as.expression(bquote(mu^3~'='~.(format(x4,digit=3)))),as.expression(bquote(mu^4~'='~.(format(x5,digit=3))))),bty='n')
+        }else{
+            legend('topleft',legend=c(as.expression(bquote('mode ='~.(format(x1,digit=3)))),as.expression(bquote(mu~'='~.(format(x2,digit=3)))),as.expression(bquote(sigma~'='~.(format(x3,digit=3)))),as.expression(bquote(mu^3~'='~.(format(x4,digit=3)))),as.expression(bquote(mu^4~'='~.(format(x5,digit=3))))),bty='n')
+        }
+    }
+    return(c(x1per=x1per,x99per=x99per,mode=x1,mean=x2,sd=x3,skewness=x4,kurtosis=x5))
 }
