@@ -9,7 +9,6 @@ RV.model <- function(par,data){
     Indices <- data$Indices
     Nma <- data$Nma
     NI <- data$NI
-#    cat('length(t),length(y),length(dy),dim(Indices),length(Nma),length(NI)=',length(t),length(y),length(dy),dim(Indices),length(Nma),length(NI),'\n')
     if(!any('A'==names(par))){
         A <- B <- phi <- omega <- 0
     }else{
@@ -160,9 +159,6 @@ rv.red <- function(par,df){
         m <- 0
     }
     sj <- par$sj
-#    cat('\nsj=',sj,'\n')
-#    cat('logtau=',logtau,'\n')
-#    cat('m=',m,'\n\n')
 #####notations
     W <- sum(1/(sj^2+dy^2))
     w <- 1/(sj^2+dy^2)/W
@@ -275,7 +271,6 @@ rv.red <- function(par,df){
             vec.rh <- c(YCp,YSp,YWp,YTp)
         }
     }
-#    cat('lin.mat=',lin.mat,'\n')
     white.par <- solve(lin.mat,vec.rh,tol=df$tol)#gamma,beta,dj
     ind0 <- length(white.par)-NI-1
     r <- white.par[ind0]+white.par[ind0+1]*t
@@ -423,12 +418,11 @@ rv.white <- function(par,df){
 rv.red.res <- function(par,df){
     y <- df$data[,2]
     dy <- df$data[,3]
-    if(df$Nma>0){
-        v <- rv.red(par,df)$v
-    }else{
+#    if(df$Nma>0){
+    v <- rv.red(par,df)$v
+#    }else{
 #        v <- rv.white(par,df)$v
-        v <- rv.red(par,df)$v
-    }
+#    }
     sj <- par$sj
 #    tmp <- sqrt((y-v)^2/(2*(dy^2+sj^2)) + 0.5*log(dy^2+sj^2)+100)
     tmp <- (y-v)^2/(2*(dy^2+sj^2)) + 0.5*log(dy^2+sj^2)+100
@@ -515,13 +509,13 @@ sopt <- function(pars,type='noise',tol=1e-10){
                 out <- try(nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500)),TRUE)#ftol=1e-16,ptol=1e-16
                 if(class(out)!='try-error'){
                     opt.par <- as.list(coef(out))
-                    if(Nma>0){
-                        val <- rv.red(par=opt.par,df = df)
-                    }else{
-                        names(opt.par) <- names(par.low)
+#                    if(Nma>0){
+                    val <- rv.red(par=opt.par,df = df)
+#                    }else{
+#                        names(opt.par) <- names(par.low)
 #                        val <- rv.white(par=opt.par,df = df)
-                        val <- rv.red(par=opt.par,df = df)
-                    }
+#                        val <- rv.red(par=opt.par,df = df)
+#                    }
                     logLmax <- sum(-(y-val$v)^2/(2*(dy^2+opt.par$sj^2))-0.5*log(2*pi)-0.5*log((dy^2+opt.par$sj^2)))
                     tmp[[kk]] <- out
                     lls <- c(lls,logLmax)
@@ -545,12 +539,11 @@ sopt <- function(pars,type='noise',tol=1e-10){
         }
     }
     opt.par <- as.list(coef(out))
-    if(Nma>0){
-        tmp <- rv.red(par=opt.par,df = df)
-    }else{
+#    if(Nma>0){
+    tmp <- rv.red(par=opt.par,df = df)
+#    }else{
 #        tmp <- rv.white(par=opt.par,df = df)
-        tmp <- rv.red(par=opt.par,df = df)
-    }
+#    }
     nams <- c('gamma','beta')
     if(NI>0) nams <- c(nams,paste0('d',1:NI))
     if(type=='period') nams <- c('A','B',nams)
@@ -558,10 +551,21 @@ sopt <- function(pars,type='noise',tol=1e-10){
     yp.full <- tmp$v
     opt.par <- c(unlist(tmp$par),opt.par)
 ####model prediction and chi2
-    res <- y-yp.full
+    res <- as.numeric(y-yp.full)
     logLmax <- sum(-res^2/(2*(dy^2+opt.par$sj^2))-0.5*log(2*pi)-0.5*log((dy^2+opt.par$sj^2)))
     chi2 <- sum(res^2/dy^2)
-    return(list(res=res,chi2=chi2,logLmax=logLmax,par=opt.par))#chi2.noise=chi2.noise
+####
+    pars <- opt.par
+    if(type=='period'){
+        pars$A <- 0
+        pars$B <- 0
+        df$Indices <- t(df$Indices)
+        yp.noise <- as.numeric(RV.model(par=pars,data = df))
+    }else{
+        yp.noise <- yp.full
+    }
+    res.sig <- as.numeric(y-(yp.full-yp.noise))
+    return(list(res=res,res.sig=res.sig,chi2=chi2,logLmax=logLmax,par=opt.par))#chi2.noise=chi2.noise
 }
 par.optimize <- function(data,Indices,NI,Nma,opt.type='sl',type='noise',omega=0,pars=NULL,tol=1e-10){
 ###pars is a list containing different variables
@@ -831,10 +835,6 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
         fmin <- 1/(tspan*ofac)
     }
     fnyq <- 0.5*length(y)/tspan
-#    cat('fmin=',fmin,'\n')
-#    cat('fmax=',fmax,'\n')
-#    cat('step=',step,'\n')
-#    cat('fnyq=',fnyq,'\n')
     if(is.null(fmax)){
         fmax <- fnyq
     }
@@ -929,7 +929,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     inds <- sort(logBF,decreasing=TRUE,index.return=TRUE)$ix
     ps <- P[inds[1:5]]
     power.opt <- logBF[inds[1:5]]
-    return(list(P=unit/f, logp=power, ps=ps,power.opt=power.opt,logBF.opt=logBF[ind],logBF=logBF,power=logBF,logBF.noise=logBF.noise,Nma=Nma,NI=NI,par=opt.par,res=tmp$res.sig,sig.level=log(c(10,100,1000))))
+    return(list(P=unit/f, logp=power, ps=ps,power.opt=power.opt,logBF.opt=logBF[ind],logBF=logBF,power=logBF,logBF.noise=logBF.noise,Nma=Nma,NI=NI,par=opt.par,res=tmp$res,sig.level=log(c(10,100,1000))))
 }
 
 #####BFP-based model inference/selection
@@ -1312,7 +1312,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     inds <- sort(logBF,decreasing=TRUE,index.return=TRUE)$ix
     ps <- P[inds[1:5]]
     power.opt <- logBF[inds[1:5]]
-    return(list(data=data,logBF=logBF,P=P,Popt=Popt,logBF.opt=logBF.opt,par=as.list(opt.par),res.nst=res.nst,res=res.s,res.n=res.n,res.s=res.s,res.st=res.st,res.nt=res.nt,sig.level=log(150), power=logBF,ps=ps,power.opt=power.opt))
+    return(list(data=data,logBF=logBF,P=P,Popt=Popt,logBF.opt=logBF.opt,par=as.list(opt.par),res.nst=res.nst,res=res.nst,res.n=res.n,res.s=res.s,res.st=res.st,res.nt=res.nt,sig.level=log(150), power=logBF,ps=ps,power.opt=power.opt))
 }
 
 #####moving periodogram

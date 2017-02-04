@@ -43,7 +43,7 @@ for(jj in 2:Nsig.max){
     }else{
         rr <- tmp$res
     }
-#####the following periodograms are for 
+#####the following periodograms are for
     if(per.type.seq=='BFP'){
         rv.ls <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type='sl',model.type='man',fmin=frange[1],fmax=frange[2],tol=tol)
         ylab <- 'log(BF)'

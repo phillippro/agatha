@@ -2,22 +2,22 @@ library(shiny)
 ############################################
 #####PartI: set parameters
 ############################################
-star <- 'ChallengeDataSet10'
+star <- 'ChallengeDataSet2'
 #star <- 'HD41248'
 #star <- 'GJ699'
 #star <- 'HD172555'
 np <- 0
-NI <- 0
-Nma <- 0
+NI <- 3
+Nma <- 1
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
 #model.type <- 'auto'#manually setting the number of MA components and differential RVs
 model.type <- 'man'#automatically determine the optimal noise model
 tol <- 1e-12#numerical fitting precision tolerance
 Nap <- 1#number of aperture
 Nc <- 0#1
-per.types <- c('BFP')#the periodograms to calculate
+per.types <- c('MLP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
-sequential <- FALSE
+sequential <- TRUE
 ###To select the numbers of differential RVs and MA components, it is better not to include calibration data.
 if(model.type=='auto'){
     Nc <- 0
