@@ -1,5 +1,6 @@
 ####This file is an example for making PeriodoFrame: the computation part
 inds <- 1:2
+tol <- 1e-10
 leg.pos <- 'topright'
 ############################
 ####find additional signals
