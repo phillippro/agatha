@@ -10,6 +10,7 @@ source('functions.R',local=TRUE)
 Nmax.plots <- 50
 count0 <- 0
 instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK','APF','PFS')
+tol <- 1e-16
 data.files <- list.files(path='data',full.name=FALSE)
 
 shinyServer(function(input, output, session) {

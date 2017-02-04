@@ -71,7 +71,7 @@ rv.res <- function(par,data){
 }
 
 ######optimize all parameters using the LM algorithm
-nlopt <- function(pars,type='noise',tol=1e-10){
+nlopt <- function(pars,type='noise'){
     var <- names(pars)
     for(k in 1:length(var)){
         assign(var[k],pars[[var[k]]])
@@ -271,7 +271,7 @@ rv.red <- function(par,df){
             vec.rh <- c(YCp,YSp,YWp,YTp)
         }
     }
-    white.par <- solve(lin.mat,vec.rh,tol=df$tol)#gamma,beta,dj
+    white.par <- solve(lin.mat,vec.rh,tol=tol)#gamma,beta,dj
     ind0 <- length(white.par)-NI-1
     r <- white.par[ind0]+white.par[ind0+1]*t
     if(NI>0){
@@ -430,7 +430,7 @@ rv.red.res <- function(par,df){
 }
 
 ######express other parameters as functions of correlated noise parameters, optimize correlated noise parameters using the LM algorithm
-sopt <- function(pars,type='noise',tol=1e-10){
+sopt <- function(pars,type='noise'){
     var <- names(pars)
     for(k in 1:length(var)){
         assign(var[k],pars[[var[k]]])
@@ -470,7 +470,7 @@ sopt <- function(pars,type='noise',tol=1e-10){
         }
     }
     tmp <- data.frame(t,y,dy)
-    df <- list(data=tmp,Indices=Indices,par.fix=par.fix,Nma=Nma,NI=NI,type=type,ts=ts,cs=cs,ss=ss,Is=Is,ys=ys,tol=tol)
+    df <- list(data=tmp,Indices=Indices,par.fix=par.fix,Nma=Nma,NI=NI,type=type,ts=ts,cs=cs,ss=ss,Is=Is,ys=ys)
 ####
     start <- list()
     par.low <- par.up <- c()
@@ -567,7 +567,7 @@ sopt <- function(pars,type='noise',tol=1e-10){
     res.sig <- as.numeric(y-(yp.full-yp.noise))
     return(list(res=res,res.sig=res.sig,chi2=chi2,logLmax=logLmax,par=opt.par))#chi2.noise=chi2.noise
 }
-par.optimize <- function(data,Indices,NI,Nma,opt.type='sl',type='noise',omega=0,pars=NULL,tol=1e-10){
+par.optimize <- function(data,Indices,NI,Nma,opt.type='sl',type='noise',omega=0,pars=NULL){
 ###pars is a list containing different variables
 ###Indices include indices which linear correlate with y in the model
 ###data include t,y,dy
@@ -597,11 +597,11 @@ par.optimize <- function(data,Indices,NI,Nma,opt.type='sl',type='noise',omega=0,
     for(ii in 1:Nrep){
 ########linear optimization
         if(opt.type=='l'){
-            tmp <- lopt(pars=pars,type=type,tol=tol)
+            tmp <- lopt(pars=pars,type=type)
         }else if(opt.type=='nl'){
-            tmp <- nlopt(pars=pars,type=type,tol=tol)
+            tmp <- nlopt(pars=pars,type=type)
         }else if(opt.type=='sl'){
-            tmp <- sopt(pars=pars,type=type,tol=tol)
+            tmp <- sopt(pars=pars,type=type)
         }
     }
 ###the returned variables are chi2 and best fitted parameters
@@ -809,7 +809,7 @@ global.notation <- function(t,y,dy,Indices,Nma,NI){
 }
 
 ####Marginalized likelihood periodogram
-MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,fmax=NULL,fmin=NULL,tspan=NULL,sampling='freq',model.type='MA',opt.par=NULL,Indices=NA,MLP.type='sub',tol=1e-10){
+MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,fmax=NULL,fmin=NULL,tspan=NULL,sampling='freq',model.type='MA',opt.par=NULL,Indices=NA,MLP.type='sub'){
 #    unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
     unit <- 1
     if(all(Inds==0)){
@@ -864,7 +864,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
 ############################################################
 ####fix the non-marginzed parameters at their optimal values
     if(is.null(opt.par) | MLP.type=='sub'){
-        tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='noise',pars=vars,tol=tol)
+        tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='noise',pars=vars)
         opt.par <- tmp$par
         if(MLP.type=='sub'){
             y <- tmp$res
@@ -916,13 +916,13 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     Popt <- (unit/f)[ind]
     omega.opt <- 2*pi*(f[which.max(logBF)]/unit)
 ####optimized parameter
-#opt <- par.optimize(data,Indices,NI,Nma,opt.type=opt.type,type='period',omega=omega,pars=var.new,tol=tol)
+#opt <- par.optimize(data,Indices,NI,Nma,opt.type=opt.type,type='period',omega=omega,pars=var.new)
     vars <- global.notation(t,y0,dy,Indices,Nma,NI)
     tmp <- local.notation(t,y0,dy,Indices,NI,omega.opt,phi=0)
     var.new <- c(vars,tmp)
 #    var.new$y <- y0
     data[,2] <- y0
-    tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='period',pars=var.new,tol=tol)
+    tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='period',pars=var.new)
     opt.par <- tmp$par
 #    cat('names(opt.par)=',names(opt.par),'\n')
 #    cat('opt.par=',unlist(opt.par),'\n')
@@ -960,11 +960,11 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
 
     logLmaxs <- array(data=NA,dim=c(length(NI.inds),length(Nmas)))
     logBFs <- array(data=NA,dim=c(length(NI.inds),length(Nmas)))
-    withProgress(message = 'Calculating log(BF) table', value = 0, {
+#    withProgress(message = 'Calculating log(BF) table', value = 0, {
     for(i in 1:length(Nmas)){
         nma <- Nmas[i]
         for(j in 1:length(NI.inds)){
-            incProgress(1/(length(Nmas)*length(NI.inds)), detail = paste("MA:", nma,'; Proxies:',paste(NI.inds[[j]],collapse=',')))
+#            incProgress(1/(length(Nmas)*length(NI.inds)), detail = paste("MA:", nma,'; Proxies:',paste(NI.inds[[j]],collapse=',')))
             if(!all(NI.inds[[j]]==0)){
                 ni <- length(NI.inds[[j]])
                 Inds <- NI.inds[[j]]
@@ -981,7 +981,7 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
             Ntry <- 10*(round(ni/3)+2*nma)
             lls <- c()
             vars <- global.notation(t,y,dy,Indices=indices,Nma=nma,NI=ni)
-            tmp <- par.optimize(data,Indices=indices,NI=ni,Nma=nma,opt.type='sl',type='noise',pars=vars,tol=tol)
+            tmp <- par.optimize(data,Indices=indices,NI=ni,Nma=nma,opt.type='sl',type='noise',pars=vars)
             ps.opt <- c(logtau=vars$logtau.ini,m=vars$mini,d=vars$dini,sj=vars$sj.ini)
             pp <- tmp$par
             if(i==1 & j==1) pss <- pp
@@ -1011,7 +1011,7 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
                     vars$sj.ini <- runif(1,sj.min,sj.max)
                     vars$NI <- ni
                     vars$Indices <- indices
-                    tmp <- try(par.optimize(data,Indices=indices,NI=ni,Nma=nma,opt.type='sl',type='noise',pars=vars,tol=tol))
+                    tmp <- try(par.optimize(data,Indices=indices,NI=ni,Nma=nma,opt.type='sl',type='noise',pars=vars))
                     if(class(tmp)!='try-error'){
                         if(tmp$logLmax>max(lls)){
                                 pp <- tmp$par
@@ -1051,7 +1051,7 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
             }
         }
     }
-    })
+#    })
     cat('The optimal Nma=',Nma.opt,'Inds=',Inds.opt,'\n')
     return(list(Nma=Nma.opt,Inds=Inds.opt,logBFs=logBFs))
 }
@@ -1113,7 +1113,7 @@ combine.data <- function(data,Ninds,Nmas){
         }
         vars <- global.notation(t,y,dy,Indices,Nmas[j],NI)
         if(is.numeric(Indices)) Indices <- matrix(Indices,ncol=1)
-        tmp <- par.optimize(data=tab,Indices=Indices,NI=NI,Nma=Nmas[j],opt.type='sl',type='noise',pars=vars,tol=tol)
+        tmp <- par.optimize(data=tab,Indices=Indices,NI=NI,Nma=Nmas[j],opt.type='sl',type='noise',pars=vars)
         val <- cbind(t0,tmp$res,dy)
         idata[[j]] <- val
         out <- rbind(out,val)
@@ -1123,7 +1123,7 @@ combine.data <- function(data,Ninds,Nmas){
 }
 
 ####Bayes factor periodogram
-BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',tol=1e-10,progress=TRUE){
+BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',progress=TRUE){
   #  unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
     unit <- 1
     if(all(Inds==0)){
@@ -1192,7 +1192,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     m <- rep(vars$mini,Nma)
     logtau <- vars$logtau.ini
     d <- rep(vars$dini,NI)
-    tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='noise',pars=vars,tol=tol)
+    tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='noise',pars=vars)
 #####optimize multiple times just to get global maximum likelihood for the noise model
     for(j in 1:2){
         opt.par.out <- opt.par <- tmp$par
@@ -1217,7 +1217,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
             d <- 0
         }
 #####optimize again using the optimized parameter as initial conditions
-        tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='noise',pars=vars,tol=tol)
+        tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='noise',pars=vars)
         chi2.ref <- tmp$chi2
         logLmax0 <- tmp$logLmax
     }
@@ -1240,7 +1240,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
 ################################################
 ####I optimization
 ####################################################
-                opt <- par.optimize(data,Indices,NI,Nma,opt.type=opt.type,type='period',omega=omega,pars=var.new,tol=tol)
+                opt <- par.optimize(data,Indices,NI,Nma,opt.type=opt.type,type='period',omega=omega,pars=var.new)
                 logLmax[kk] <- opt$logLmax
                 chi2 <- opt$chi2
                 opt.pars[kk,] <- unlist(opt$par)
@@ -1264,7 +1264,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
 ################################################
 ####I optimization
 ####################################################
-            opt <- par.optimize(data,Indices,NI,Nma,opt.type=opt.type,type='period',omega=omega,pars=var.new,tol=tol)
+            opt <- par.optimize(data,Indices,NI,Nma,opt.type=opt.type,type='period',omega=omega,pars=var.new)
             logLmax[kk] <- opt$logLmax
             chi2 <- opt$chi2
             opt.pars[kk,] <- unlist(opt$par)
