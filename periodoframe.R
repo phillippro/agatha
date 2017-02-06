@@ -1,6 +1,7 @@
 library(minpack.lm)
 source('periodograms.R')
 #library(lomb)
+tol <- 1e-16
 RV.model <- function(par,data){
 ####
     t <- data$data[,1]
