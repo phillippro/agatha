@@ -17,7 +17,7 @@ for(jj in 2:Nsig.max){
     }
     ####oversampling the signal proximity to find precise periodicity
     if(per.type.seq=='BFP'){
-        tmp <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,opt.type='sl',model.type='man',fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1],tol=tol)
+        tmp <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,opt.type='sl',model.type='man',fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
     }
     if(per.type.seq=='MLP'){
         if(length(per.target)>1){
@@ -43,9 +43,9 @@ for(jj in 2:Nsig.max){
     }else{
         rr <- tmp$res
     }
-#####the following periodograms are for 
+#####the following periodograms are for
     if(per.type.seq=='BFP'){
-        rv.ls <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type='sl',model.type='man',fmin=frange[1],fmax=frange[2],tol=tol)
+        rv.ls <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type='sl',model.type='man',fmin=frange[1],fmax=frange[2])
         ylab <- 'log(BF)'
         name <- 'logBF'
     }

@@ -7,12 +7,11 @@ The shiny app of Agatha is available [here](https://phillippro.shinyapps.io/Agat
 If you use Agatha in your work, please cite **"Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangle periodic signals from correlated noise in a periodogram framework, submitted to MNRAS"**
 
 ### use the app locally
-If you want to use the app locally, you download the whole GitHub repository to a local directory. Then you should install R and R packages. If you have already have R installed, 
-please install packages with the following command:
+If you want to use the app locally, you download the whole GitHub repository to a local directory. Then you should install R and R packages. The user should install packages 'shiny', 'magicaxis', 'minpack.lm' and 'fields'. For example,
 ```
-install.packages('shiny','magicaxis','minpack.lm','fields')
+install.packages(c('shiny','magicaxis','minpack.lm','fields'))
 ```
-To run the app locally, the user should go to the directory where the ui.R and server.R files are, and type "R" to enter the R console, and then run the app 
+. To run the app locally, the user should go to the directory where the ui.R and server.R files are, and type "R" to enter the R console, and then run the app 
 using the following commands:
 ```
 library(shiny)
@@ -31,7 +30,7 @@ where t, y and dy are the times, y values and the corresponding errors. Nma is t
 noise proxies. Inds is a vector of column numbers of indices (or noise proxies) in the "Indices" matrix. 
 For example, "Inds=1:4" means linearly including the proxies from column 1 to column 4 of "Indices" in the noise model.
 "ofac" is the over sampling factor, and opt.type can be "nl" or "sl", and is the method used to optimize parameters.
-"sl" is suggested because it is more efficient and is as reliable as "nl". "model.type" is a parameter to specify whether to compare models. If model.type='auto', model comparison is done using the BFP to select the optimal noise model. If model.type='man', BFP will use Nma and NI manually provided by the user. "fmax" is the maximum frequency for frequency sampling, and "tol" is the tolorence or prevision required to optimize parameters (or maximize the likelihood) numerically. 
+"sl" is suggested because it is more efficient and is as reliable as "nl". "model.type" is a parameter to specify whether to compare models. If model.type='auto', model comparison is done using the BFP to select the optimal noise model. If model.type='man', BFP will use Nma and Inds manually provided by the user. "fmax" is the maximum frequency for frequency sampling, and "tol" is the tolorence or prevision required to optimize parameters (or maximize the likelihood) numerically. 
 
 The main output of the BFP function is the logarithmic Bayes factor (logBF) for a sample of periods (P). Then the user can make a simple BFP using 
 ```

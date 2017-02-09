@@ -6,11 +6,12 @@ library(magicaxis)
 # options(shiny.maxRequestSize = 9*1024^2)
 source('periodoframe.R')
 source("periodograms.R")
-source("mcmc_func.R",local=TRUE)
 source('functions.R',local=TRUE)
 Nmax.plots <- 50
 count0 <- 0
-instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK')
+instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK','APF','PFS')
+tol <- 1e-16
+data.files <- list.files(path='data',full.name=FALSE)
 
 shinyServer(function(input, output, session) {
 ####select from list
@@ -25,7 +26,7 @@ p {
 </head>
 <body>
 <br />
-<p>Agatha is the name of my wife's most favorite crime novelist, Agatha Christie. Similar to the investigations of various crimes in the detective novels, the Agatha algorithm is to find the weak signals embedded in correlated noise. 
+<p>Agatha is the name of my wife's most favorite crime novelist, Agatha Christie. Similar to the investigations of various crimes in the detective novels, the Agatha algorithm is to find the weak signals embedded in correlated noise.
 
 This web app is based on the code in GitHub: <a href='https://github.com/phillippro/agatha'>https://github.com/phillippro/agatha</a>. If you use this web app in your work, please cite 'Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangling periodic signals from correlated noise in a periodogram framework, submitted to MNRAS'. The abstract of this paper is available <a href='https://www.dropbox.com/s/4ug8tfqyfcsr9gx/Agatha_abstract.pdf?dl=0'>here</a>.</p>
 
@@ -40,28 +41,28 @@ This web app is based on the code in GitHub: <a href='https://github.com/phillip
 </ul>
 
 <p>
-Agatha is based on the Bayes factor periodogram (BFP) and the marginalized likelihood periodogram (MLP). The BFP is calculated by maximizing the likelihood of a combination of sinusoids, linear functions of time and noisy proxies, and the moving average model. The Bayes factor for a given frequency is derived from the maximum likelihood by approximating the Bayes factor using the Bayes Information Criterion (BIC). The MLP is calculated by marginalizing the likelihood over the amplitudes of sinusoids and the parameters in a linear function of time. Before calculating MLP, the best-fitted noise model is subtracted from the data. 
+Agatha is based on the Bayes factor periodogram (BFP) and the marginalized likelihood periodogram (MLP). The BFP is calculated by maximizing the likelihood of a combination of sinusoids, linear functions of time and noisy proxies, and the moving average model. The Bayes factor for a given frequency is derived from the maximum likelihood by approximating the Bayes factor using the Bayes Information Criterion (BIC). The MLP is calculated by marginalizing the likelihood over the amplitudes of sinusoids and the parameters in a linear function of time. Before calculating MLP, the best-fitted noise model is subtracted from the data.
 </p>
 
 <p>
-The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the generalized LS (GLS), the GLS with floating trend (GLST) and the Bayesian GLS (BGLS). All periodograms can be computed for the sub-dataset within a moving time window to form 2D periodograms, which are also called 'moving periodograms'. Moving periodograms are used to check the consistency of signals in time. The user should adjust the 'visualization parameters' to optimize the visualization of signals in moving periodograms. 
+The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the generalized LS (GLS), the GLS with floating trend (GLST) and the Bayesian GLS (BGLS). All periodograms can be computed for the sub-dataset within a moving time window to form 2D periodograms, which are also called 'moving periodograms'. Moving periodograms are used to check the consistency of signals in time. The user should adjust the 'visualization parameters' to optimize the visualization of signals in moving periodograms.
 </p>
 </body>
 </html>
 "))})
-    
+
   output$files <- renderUI({
     if(is.null(input$uptype)) return()
     if(input$uptype=='list'){
         selectizeInput('target','Select data files from the list',
-                  choices=gsub('.dat','',gsub('_TERRA.+','',list.files('data',
+                  choices=gsub('\\..+','',gsub('_TERRA.+','',list.files('data',
                                     full.names=FALSE))),multiple=TRUE)
     }else if(input$uptype=='upload'){
-        fileInput('files', 'Choose files', multiple=TRUE) 
-#selectizeInput('Nf','Number of files to upload',choices=1:10,selected=1,multiple=FALSE) 
+        fileInput('files', 'Choose files', multiple=TRUE)
+#selectizeInput('Nf','Number of files to upload',choices=1:10,selected=1,multiple=FALSE)
     }
   })
-  
+
     output$uptext <- renderUI({
         if(is.null(input$uptype)) return()
         if(input$uptype=='upload'){
@@ -74,7 +75,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
       if(input$proxy.type=='cum'){
           selectInput("ni.max",'Maximum number of noise proxies',choices = 0:NI.max()[input$comp.target],selected = min(3,NI.max()[input$comp.target]))
       }
-  }) 
+  })
 
     NI.max <- reactive({
         if(is.null(data())) return()
@@ -85,7 +86,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         names(val) <- names(data())
         return(val)
     })
-  
+
     output$per.type.seq <- renderUI({
         if(is.null(input$sequence)) return()
         if(input$sequence) selectInput("per.type.seq",'Periodogram used to find additional signals',choices=input$per.type,selected=NULL,multiple=FALSE)
@@ -113,11 +114,11 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         })
     }
   })
-    
+
     output$per.target <- renderUI({
         if(is.null(data())) return()
         selectizeInput("per.target",'Data sets',choices=names(data()),selected=names(data())[1],multiple=TRUE)
-    }) 
+    })
 
     Ntarget <- reactive({
         if(is.null(input$per.target)) return()
@@ -127,7 +128,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     output$per.target2 <- renderUI({
         if(is.null(data())) return()
         selectizeInput("per.target2",'Data sets',choices=names(data()),selected=names(data())[1],multiple=TRUE)
-    }) 
+    })
 
     Ntarget2 <- reactive({
         length(input$per.target2)
@@ -154,24 +155,24 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         }
     })
 
-    output$text2D <- renderText({ 
+    output$text2D <- renderText({
         "<font color=\"DarkSlateGray\"><b>To make 2D periodograms, the time series should contain at least 100 data points over a time span beyond 200 time units. Otherwise, there could be errors.</b></font>"
     })
 
     output$Inds <- renderUI({
         if(is.null(input$per.type) | is.null(data()) | is.null(Ntarget())) return()
         lapply(1:Ntarget(),function(i){
-            selectInput(paste0('Inds',i),paste('Noise proxies for',input$per.target[i]),choices = 0:NI.max()[i],selected = 0,multiple=TRUE)
+            selectInput(paste0('Inds',i),paste('Noise proxies for',input$per.target[i]),choices = 0:NI.max()[input$per.target[i]],selected = 0,multiple=TRUE)
         })
     })
 
     output$Inds2 <- renderUI({
         if(is.null(data()) | is.null(input$per.target2)) return()
         lapply(1:Ntarget2(),function(i){
-            selectInput(paste0("Inds2.",i),paste('Noise proxies for',input$per.target2[i]),choices = 0:NI.max()[i],selected = 0,multiple=TRUE)
+            selectInput(paste0("Inds2.",i),paste('Noise proxies for',input$per.target2[i]),choices = 0:NI.max()[input$per.target2[i]],selected = 0,multiple=TRUE)
         })
     })
-    
+
     output$proxy.text <- renderUI({
       helpText("If 'cumulative' is selected, the noise proxies would be arranged in decreasing order of the Pearson correlation coefficients between proxies and RVs. Then proxies would be compared cumulatively from the basic number up to the maximum number of proxies. If 'group' is selected, the proxies would not be rearranged, and would be compared in groups, which are determined by the basic number of proxies and group division numbers. For example, if the basic number is 4 and division numbers are 6,11,19, models with proxies of {1-4}, {1-6}, {1-4, 7-11}, {1-4, 12-19} would be compared. If 'manual' is selected, the user should manually input the groups of proxies for comparison. Note that '0' means no proxy. ")
   })
@@ -179,7 +180,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     output$comp.target <- renderUI({
         if(is.null(data())) return()
         selectizeInput("comp.target",'Data sets',choices=names(data()),selected=names(data())[1],multiple=FALSE)
-    }) 
+    })
 
   output$proxy.type <- renderUI({
       if(is.null(NI.max())) return()
@@ -189,7 +190,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
           output$warn <- renderText({'No indices available for comparison!'})
           verbatimTextOutput("warn")
       }
-  }) 
+  })
 
   output$nI.basic <- renderUI({
       if(is.null(input$proxy.type)) return()
@@ -197,7 +198,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
 #input$proxy.type=='cum'
           selectInput("NI0",'Basic number of noise proxies',choices = 0:NI.max()[input$comp.target],selected = 0)#NI.max())
       }
-  }) 
+  })
 
     output$Nman <- renderUI({
         if(is.null(input$proxy.type)) return()
@@ -215,7 +216,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                             choices=0:NI.max()[input$comp.target],multiple = TRUE)
             })
         }
-    }) 
+    })
 
   output$nI.comp <- renderUI({
     if(is.null(input$proxy.type) | is.null(input$NI0)) return()
@@ -223,13 +224,13 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
       selectInput("NI.group",'Group division numbers',
                   choices=(as.integer(input$NI0)+1):NI.max()[input$comp.target],multiple = TRUE )
     }
-  }) 
-  
+  })
+
   target.list <- reactive({
     f1 <- gsub('_TERRA.+','',list.files('data',full.names=FALSE))
     gsub('.dat','',f1)
   })
-  
+
   target <- reactive({
     if(is.null(input$target) & is.null(input$files)) return()
     if(input$uptype=='list'){
@@ -245,7 +246,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
   instr <- reactive({
       gsub('.+_','',target())
   })
-  
+
   # added "session" because updateSelectInput requires it
   data <- eventReactive(input$show,{
     ins <- instr()
@@ -260,9 +261,9 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                 ns <- c(ns,input$files[[i,'name']])
                 tab <- read.table(data.path,nrows=1)
                 if(class(tab[1,1])=='factor'){
-                    tab <- read.table(data.path,header=TRUE) 
+                    tab <- read.table(data.path,header=TRUE)
                 }else{
-                    tab <- read.table(data.path) 
+                    tab <- read.table(data.path)
                 }
                 inds <- sort(tab[,1],index.return=TRUE)$ix
                 tab <- tab[inds,]
@@ -275,9 +276,9 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                     if(ncol(df[[i]])==6 & ins[i]=='HARPS'){
                         colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index')#harps
                     }else if(ncol(df[[i]])==7 & ins[i]=='KECK'){
-                        colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','Integration Time')#new keck
+                        colnames(df[[i]])=c('Time','RV','eRV','S-index','H-alpha','Photon Count','ObservationTimes')#new keck
                     }else if(ncol(df[[i]])==6 & ins[i]=='KECK'){
-                        colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','Integration Time')#old keck
+                        colnames(df[[i]])=c('Time','RV','eRV','S-index','Photon Count','ObservationTimes')#old keck
                     }else if(ncol(df[[i]])==3){
                         colnames(df[[i]])=c('Time','RV','eRV')#other
                     }else{
@@ -296,7 +297,9 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             target <- input$target[i]
             star <- gsub('_.+','',target)
             dir  <- 'data/'
-            f0 <- paste0(dir,target,'_TERRA.dat')
+            ind <- grep(target,data.files)
+            file <- data.files[ind[1]]
+            f0 <- paste0(dir,file)
             if(!file.exists(f0)){
                 f0 <- paste0(dir,target,'.dat')
             }
@@ -356,14 +359,14 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     nam <- c()
     for(i in 1:length(instr())){
       names <- colnames(data()[[i]])
-      names <- names[-c(1,3)]#Time and eRV
+      names <- names[-c(1,3)]#e.g. 'Time' and 'eRV' for RV data
       names <- c(names,'Window Function')
 #      nam <- c(nam,paste(names(data())[i],names,sep=':'))
       nam <- c(nam,names)
     }
     return(unique(nam))
   })
-  
+
   ns.wt <- reactive({
       nam <- c()
       lab <- c()
@@ -377,31 +380,31 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
       }
     return(list(name=nam,label=lab))
   })
-  
+
     output$scatter.target <- renderUI({
         if(is.null(data())) return()
         selectizeInput("scatter.target",'Data sets',choices=names(data()),selected=names(data())[1],multiple=FALSE)
-    }) 
+    })
 
     output$xs <- renderUI({
         if(is.null(data()) | is.null(input$scatter.target)) return()
         names <- ns.wt()$name
         nam <- names[grep(input$scatter.target,names)]
-        selectizeInput("xs", "Choose x axis", 
+        selectizeInput("xs", "Choose x axis",
                        choices  = nam,
                        selected = nam[1],multiple=FALSE)
     })
-    
+
 
     output$ys <- renderUI({
         if(is.null(data()) | is.null(input$scatter.target)) return()
         names <- ns.wt()$name
         nam <- names[grepl(input$scatter.target,names)]
-        selectizeInput("ys", "Choose y axis", 
+        selectizeInput("ys", "Choose y axis",
                        choices  = nam,
                        selected = nam[2],multiple=FALSE)
     })
-   
+
     scatterInput <- function(){
         i <- 1
         tar <- gsub(':.+','',input$xs[i])
@@ -423,7 +426,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             arrows(varx,vary-ey,varx,vary+ey,length=0.03,angle=90,code=3)
         }
     }
-  
+
     observeEvent(input$scatter,{
         output$sca <- renderPlot({
             isolate({
@@ -451,48 +454,48 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             par(mar=c(5,5,1,1))
             scatterInput()
             dev.off()
-        })    
-    
+        })
+
     observeEvent(input$scatter,{
         output$download.scatter.button <- renderUI({
             downloadButton('download.scatter', 'Download scatter plot')
         })
     })
-    
+
     output$var <- renderUI({
         if(is.null(input$per.type)) return()
 #        cat('ns()=',ns(),'\n')
         if(!any(grepl('MLP',input$per.type)) & !any(grepl('BFP',input$per.type))){
-            selectInput("yvar", "Choose observables", choices  = ns(),selected = ns()[1],multiple=TRUE)         
+            selectInput("yvar", "Choose observables", choices  = ns(),selected = ns()[1],multiple=TRUE)
         }else{
-            selectInput("yvar", "Choose observables", 
+            selectInput("yvar", "Choose observables",
                         choices  = ns()[1],
-                        selected = ns()[1],multiple=FALSE)    
+                        selected = ns()[1],multiple=FALSE)
         }
     })
 
   output$var2 <- renderUI({
       if(is.null(input$per.type2)) return()
-      selectInput("yvar2", "Choose observables", 
+      selectInput("yvar2", "Choose observables",
                         choices  = ns()[1],
-                        selected = ns()[1],multiple=FALSE)     
+                        selected = ns()[1],multiple=FALSE)
   })
 
   output$helpvar <- renderUI({
     if(is.null(input$yvar)) return()
-    helpText("If the BFP is selected, only 'RV' is available for selection. The meaning of variables are as follows: 'all'--the periodograms of all variables, 
+    helpText("If the BFP is selected, only 'RV' is available for selection. The meaning of variables are as follows: 'all'--the periodograms of all variables,
             'RVs'--periodograms of RVs, 'Indices'-- periodograms of Indices,
              'Instrument:Variable'--individual variables")
   })
 
   periodogram.var <- reactive({
-    if(is.null(input$yvar)) return() 
+    if(is.null(input$yvar)) return()
     vars <- input$yvar[input$yvar!='all' & input$yvar!='RVs' & input$yvar!='Indices']
     return(unique(vars))
 })
 
   periodogram.var2 <-  reactive({
-    if(is.null(input$yvar2)) return() 
+    if(is.null(input$yvar2)) return()
     vars <- c()
     if(any(input$yvar2!='Indices' & input$yvar2!='all' & input$yvar2!='RVs')){
         vars <- c(vars,input$yvar2[input$yvar2!='all' & input$yvar2!='RVs' & input$yvar2!='Indices'])
@@ -501,7 +504,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
   })
 
   per.par <- reactive({
-      vals <- list(ofac=input$ofac,frange=10^input$frange,per.type=input$per.type,per.target=input$per.target)
+      vals <- list(ns=ns(),ofac=input$ofac,frange=10^input$frange,per.type=input$per.type,per.target=input$per.target)
       if(any(input$per.type=='MLP' | input$per.type=='BFP')){
           Nmas <- c()
           Inds <- list()
@@ -525,7 +528,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
   })
 
   per.par2 <- reactive({
-      vals <- list(ofac=input$ofac2,frange=10^input$frange2,per.type=input$per.type2,per.target=input$per.target2)
+      vals <- list(ns=ns(),ofac=input$ofac2,frange=10^input$frange2,per.type=input$per.type2,per.target=input$per.target2)
       if(any(input$per.type2=='MLP'|input$per.type2=='BFP')){
           Nmas <- c()
           Inds <- list()
@@ -540,7 +543,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
       vals <- c(vals,Dt=as.integer(input$Dt),Nbin=as.integer(input$Nbin),alpha=as.integer(input$alpha),scale=input$scale,pmin.zoom=input$range.zoom[1],pmax.zoom=input$range.zoom[2],show.signal=input$show.signal)
       return(vals)
   })
-  
+
     model.selection <- eventReactive(input$compare,{
                                         #      instrument <- instr()[input]#gsub(':.+','',ns()[1])
         tab <- data()[[input$comp.target]]
@@ -601,8 +604,8 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         logBF <- data.frame(round(out$logBF,digit=1))
         colnames(logBF) <- col.names
         rownames(logBF) <- row.names
-        cat('colnames(logBF)=',colnames(logBF),'\n')
-        cat('rownames(logBF)=',rownames(logBF),'\n')
+#        cat('colnames(logBF)=',colnames(logBF),'\n')
+#        cat('rownames(logBF)=',rownames(logBF),'\n')
         logBF.download <- logBF
         colnames(logBF.download) <- paste0('MA',out$Nmas)
         rnames <- c()
@@ -686,7 +689,7 @@ output$color <- renderUI({
     Nplots <- max(1,Nplots)*Nvar
     return(Nplots)
   })
-    
+
   Nper2 <- eventReactive(input$plot2D,{
     if(is.null(input$per.type2)) return()
     Nvar <- length(periodogram.var2())
@@ -706,7 +709,7 @@ output$color <- renderUI({
         logic <- c(logic,TRUE)
       }else{
         logic <- c(logic,FALSE)
-      }  
+      }
     }
     return(logic)
   })
@@ -721,7 +724,7 @@ output$color <- renderUI({
 #          sliderInput("Dt", "Moving time window", min = 100, max = ,value=min(1000,round(tmax-tmin)),step=100)
       }
   })
-  
+
   output$Nbin <- renderUI({
       if(!is.null(data())){
           selectizeInput('Nbin','Number of moving steps',
@@ -739,18 +742,18 @@ output$color <- renderUI({
   output$zoom <- renderUI({
       sliderInput('range.zoom','Zoom-in period range', min = as.integer(1/10^(input$frange2[2])), max = min(100,as.integer(1/10^(input$frange2[1]))),value=c(max(10,1/10^(input$frange2[2])),min(30,1/10^(input$frange2[1]))),step=1)
   })
-  
+
   per1D.data <- eventReactive(input$plot1D,{
 #      reactive({
 #function(){
           calc.1Dper(Nmax.plots, periodogram.var(),per.par(),data())
   })
-    
+
     output$per1D.data <- downloadHandler(
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram1D-', f2, '.txt', sep='')
+            paste('periodogram1D_', f2, '.txt', sep='')
         },
         content = function(file) {
             tab <- per1D.data()$per.data
@@ -767,7 +770,7 @@ output$color <- renderUI({
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram1D-', f2, '.pdf', sep='')
+            paste('periodogram1D_', f2, '.pdf', sep='')
         },
       content = function(file) {
         pdf(file,8,8)
@@ -787,7 +790,7 @@ output$color <- renderUI({
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram1D-individual-', f2, '.pdf', sep='')
+            paste('periodogram1D_individual_', f2, '.pdf', sep='')
         },
       content = function(file) {
         pdf(file,4,4)
@@ -810,7 +813,7 @@ output$color <- renderUI({
         if(is.null(per1D.data())) return()
         helpText("The column names are 'P' and 'type:Observable:power', where 'name' is the periodogram type, 'P' is period, and 'power' is the periodogram power which could be logarithmic marginalized likelihood (logML; for MLP and BGLS) or Bayes factor (logBF; for BFP) or power (for other periodograms). ")
     })
-    
+
     output$per <- renderPlot({
         if(is.null(per1D.data())) return()
         per1D.plot(per1D.data()$per.data,per1D.data()$tits,per1D.data()$pers,per1D.data()$levels,per1D.data()$ylabs)
@@ -828,7 +831,7 @@ output$color <- renderUI({
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram2D-', f2, '.txt', sep='')
+            paste('periodogram2D_', f2, '.txt', sep='')
         },
         content = function(file) {
             tmp <- MP.data()
@@ -861,19 +864,19 @@ output$color <- renderUI({
             plotOutput("per2", width = "600px", height = "600px")
         })
     })
-    
+
     output$per2D.figure <- downloadHandler(
         filename = function() {
             f1 <- gsub(" ",'_',Sys.time())
             f2 <- gsub(":",'-',f1)
-            paste('periodogram2D-', f2, '.pdf', sep='')
+            paste('periodogram2D_', f2, '.pdf', sep='')
         },
         content = function(file) {
             pdf(file,8,8)
             plotMP(MP.data(),per.par2())
             dev.off()
         })
-    
+
     output$download.per2D.plot <- renderUI({
         if(is.null(MP.data())) return()
         downloadButton('per2D.figure', 'Download 2D periodogram')

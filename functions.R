@@ -48,7 +48,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             }
         }
     }
-    Nvar <- min(length(pars),Nmax.plots)      
+    Nvar <- min(length(pars),Nmax.plots)
     sig.levels <- c()
     cnames <- c()
     pers <- c()
@@ -75,7 +75,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         }
         ypar <- var
         Indices <- NA
-        if(ncol(tab)>3 & !all(Inds==0)){
+        if(ncol(tab)>3 & !all(unlist(Inds)==0)){
             Indices <- as.matrix(tab[,4:ncol(tab)])
             if(!is.matrix(Indices) & !is.data.frame(Indices)){
                 Indices <- matrix(Indices,ncol=1)
@@ -85,12 +85,11 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 Indices[,j] <- as.numeric(scale(Indices[,j]))
             }
         }
-        if(ypar=='RV'){
+        if(ypar==ns[1]){
             dy <- tab[,3]
         }else{
             dy <- rep(0.1,nrow(tab))
-        } 
-        cat('per.type=',per.type,'\n')
+        }
         if(ypar!='Window Function'){
             y <- tab[,ypar]
             if(per.type=='GLST'){
@@ -108,7 +107,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             }else if(per.type=='BFP'){
                 rv.ls <- BFP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,
                              Nma=Nma,Inds=Inds,model.type='man',Indices=Indices,
-                             ofac=ofac,fmin=frange[1],fmax=frange[2],tol=1e-16)
+                             ofac=ofac,fmin=frange[1],fmax=frange[2])
                 ylab <- 'log(BF)'
                 name <- 'logBF'
             }else if(per.type=='MLP'){
@@ -171,7 +170,6 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 source('additional_signals.R',local=TRUE)
             }
         }
-#        cat('cnames=',cnames,'\n')
     }
     colnames(per.data) <- cnames
     return(list(per.data=per.data,tits=tits,pers=pers,levels=sig.levels,ylabs=ylabs))
@@ -185,7 +183,6 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
         par(mfrow=c(2,2),mar=c(5,5,3,1),cex.lab=1.2,cex.main=0.8,cex.axis=1.2,cex=1)
     }
     P <- per.data[,1]
-#    cat('colnames(per.data)=',colnames(per.data),'\n')
     if(!is.null(index)){
         inds <- index
         titles <- rep('',inds)
@@ -193,7 +190,7 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
         inds <- 1:(ncol(per.data)-1)
         titles <- tits
     }
-    for(i in inds){ 
+    for(i in inds){
         power <- per.data[,i+1]
         ylab <- ylabs[i]#gsub('.+:','',colnames(per.data)[i+1])
         per.type <- gsub('[[:digit:]]signal:.+','',colnames(per.data)[i+1])
@@ -210,10 +207,10 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
             power.max <- p[2]
         }else{
             pmaxs <- p[,1]
-            power.max <- p[,2]           
+            power.max <- p[,2]
             if(length(pmaxs)>4){
                 pmaxs <- p[1:2,1]
-                power.max <- p[1:2,2]           
+                power.max <- p[1:2,2]
             }
         }
         if(length(pmaxs)>0){
@@ -280,9 +277,9 @@ per2D.data <- function(vars,per.par,data){
     y <- tab[,2]
     dy <- tab[,3]
     if(length(per.target)==1){
-        mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nma,Inds=Inds,tol=1e-18,Indices=Indices)
+        mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nma,Inds=Inds,Indices=Indices)
     }else{
-        mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=0,Inds=0,tol=1e-16,Indices=Indices)
+        mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=0,Inds=0,Indices=Indices)
     }
     x2 <- mp$tmid
     y2 <- mp$P
@@ -328,7 +325,11 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
             Indices <- data[,4:ncol(data)]
             cors <- c()
             for(j in 1:ncol(Indices)){
+                if(sd(Indices[,j])==0){
+                cors <- c(cors,0)
+                }else{
                 cors <- c(cors,abs(cor(Indices[,j],y)))
+                }
             }
             inds <- sort(cors,decreasing=TRUE,index.return=TRUE)$ix
             if(Nproxy>Nbasic){
@@ -344,7 +345,7 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
                 NI.inds[[1]] <- 0
             }
             groups <- sort(as.integer(groups))
-            for(j in 1:length(groups)){  
+            for(j in 1:length(groups)){
                 if(j==1){
                     NI.inds[[j+1]] <- 1:groups[j]
                 }else{
@@ -362,7 +363,7 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
         }
     }
     if(ncol(data)>3){
-        out <- BFP.comp(t, y, dy, Nmas=0:Nma.max,NI.inds=NI.inds,Indices=data[4:ncol(data)])
+        out <- BFP.comp(t, y, dy, Nmas=0:Nma.max,NI.inds=NI.inds,Indices=as.matrix(data[4:ncol(data)]))
     }else{
         out <- BFP.comp(t, y, dy, Nmas=0:Nma.max,NI.inds=0,Indices=NA)
     }
@@ -393,7 +394,75 @@ MCMC.panel <- function(){
         cat('args=',c(id,Niter,Nbin.per,nbin.per,tem,inicov,Pini,noise.model,period.par,Ncores,Np,mode,Dtype,Nw,prior.type,calibration)
            ,'\n')
         c(id,Niter,Nbin.per,nbin.per,tem,inicov,Pini,noise.model,period.par,Ncores,Np,mode,Dtype,Nw,prior.type,calibration)
-    } 
+    }
     source('../mcmc_red.R',local=TRUE)
     return(list(folder=folder,pdf=gsub('.+/','',pdf.name)))
+}
+data.distr <- function(x,xlab,ylab,main='',oneside=FALSE,plotf=TRUE){
+    xs <- seq(min(x),max(x),length.out=1e3)
+    fitnorm <- fitdistr(x,"normal")
+    p <- hist(x,plot=FALSE)
+    xfit <- length(x)*mean(diff(p$mids))*dnorm(xs,fitnorm$estimate[1],fitnorm$estimate[2])
+    ylim <- range(xfit,p$counts)
+    if(plotf){
+        plot(p,xlab=xlab,ylab=ylab,main=main,ylim=ylim)
+        lines(xs,xfit,col='red')
+    }
+    x1=Mode(x)
+    x2=mean(x)
+    x3=sd(x)
+    x4=skewness(x)
+    x5=kurtosis(x)
+    xs = sort(x)
+    x1per = max(min(xs),xs[floor(length(xs)*0.01)])
+    x99per = min(xs[ceiling(length(xs)*0.99)],max(xs))
+#    abline(v=c(x1per,x99per),col='blue')
+    if(plotf){
+        if(!oneside){
+            legend('topleft',legend=c(as.expression(bquote('mode ='~.(format(x1,digit=3)))),as.expression(bquote(mu~'='~.(format(x2,digit=3)))),as.expression(bquote(sigma~'='~.(format(x3,digit=3))))),bty='n')
+            legend('topright',legend=c(as.expression(bquote(mu^3~'='~.(format(x4,digit=3)))),as.expression(bquote(mu^4~'='~.(format(x5,digit=3))))),bty='n')
+        }else{
+            legend('topleft',legend=c(as.expression(bquote('mode ='~.(format(x1,digit=3)))),as.expression(bquote(mu~'='~.(format(x2,digit=3)))),as.expression(bquote(sigma~'='~.(format(x3,digit=3)))),as.expression(bquote(mu^3~'='~.(format(x4,digit=3)))),as.expression(bquote(mu^4~'='~.(format(x5,digit=3))))),bty='n')
+        }
+    }
+    return(c(x1per=x1per,x99per=x99per,mode=x1,mean=x2,sd=x3,skewness=x4,kurtosis=x5))
+}
+show.peaks <- function(ps,powers,levels=NULL,Nmax=5){
+    if(is.null(levels)) levels <- max(max(powers)-log(150),median(powers))
+    ind <- which(powers==max(powers) | (powers>(max(powers)-log(100)) & powers>max(levels)))
+    if(max(powers)-min(powers)<5) ind <- which.max(powers)
+    pmax <- ps[ind]
+    ppmax <- powers[ind]
+    j0 <- 1
+    p0 <- pmax[1]
+    pp0 <- ppmax[1]
+    pms <- p0
+    pos <- pp0
+    if(length(pmax)>1){
+        for(j in 2:length(pmax)){
+            if(abs(pmax[j]-p0) < 0.1*p0){
+                if(ppmax[j]>pp0){
+                    j0 <- j
+                    p0 <- pmax[j]
+                    pp0 <- ppmax[j0]
+                    pms[length(pms)] <- p0
+                    pos[length(pos)] <- pp0
+                }
+			    }else{
+                j0 <- j
+                p0 <- pmax[j]
+                pp0 <- ppmax[j0]
+                pms <- c(pms,p0)
+                pos <- c(pos,pp0)
+            }
+        }
+    }else{
+        pms <- pmax
+        pos <- ppmax
+    }
+    if(length(pms)>Nmax){
+      pms <- pms[1:Nmax]
+      pos <- pos[1:Nmax]
+    }
+    return(cbind(pms,pos))
 }

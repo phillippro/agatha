@@ -57,7 +57,7 @@ if(per.type=='BFP'){
     legend(leg.pos,legend=c('BFP',paste0(dur1,'s')),bty='n')
 }
 
-####MLP 
+####MLP
 if(per.type=='MLP'){
     t1 <- proc.time()
     per <- MLP(tab[,1],tab[,2],tab[,3],Nma=Nma,Inds=Inds,ofac=ofac,mar.type='part',model.type=model.type,fmax=fmax,opt.par=NULL,Indices=Indices,MLP.type=MLP.type)
@@ -150,7 +150,7 @@ if(per.type=='LS'){
 ####find additional signals
 ############################
 if(sequential){
-    for(jj in 1:10){
+    for(jj in 1:5){
         cat('\nfind',jj+1,'signal!\n')
 ###make another BFP for data subtracted by the signal
         if(is.matrix(per$res)){
