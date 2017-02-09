@@ -303,7 +303,12 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             if(!file.exists(f0)){
                 f0 <- paste0(dir,target,'.dat')
             }
-            tab <- read.table(f0,header=TRUE,check.names=FALSE)
+            tab <- read.table(f0,nrows=1)
+            if(class(tab[1,1])=='factor'){
+                tab <- read.table(f0,header=TRUE,check.names=FALSE)
+            }else{
+                tab <- read.table(f0)
+            }
 #            cat('colnames(tab)=',colnames(tab),'\n')
             inds <- sort(tab[,1],index.return=TRUE)$ix
             tab <- tab[inds,]

@@ -1028,42 +1028,25 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
                 pen <- 0.5*(ni-ni.min)*log(Ndata)
             }
             logBFs[j,i] <- logLmaxs[j,i]-logLmaxs[1,1]-pen
-<<<<<<< HEAD
-            cat('\nlog(BF) for Indices=',Inds,'and','Nma=',nma,'is',format(logBFs[j,i],digit=3),'\n')
-            penI <- log(10)
-            penMA <- log(150)
-            if(j>1 & i==1){
-                if(logBFs[j,i]>(max(logBFs[1:(j-1),1:i])+penI)){
-                    Nma.opt <- nma
-=======
             cat('log(BF) for Indices=',Inds,'and','Nma=',nma,'is',format(logBFs[j,i],digit=3),'\n\n')
             penI <- log(10)
             penMA <- log(150)
             if(j>1 & i==1){
-                if(all(logBFs[j,i]>(logBFs[1:(j-1),i]+penI))){
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
+                if(logBFs[j,i]>(max(logBFs[1:(j-1),1:i])+penI)){
                     Inds.opt <- sort(Inds)
+                    Nma.opt <- nma
                     pss <- pp
                 }
             }
             if(i>1 & j==1){
-<<<<<<< HEAD
                 if(logBFs[j,i]>(max(logBFs[1:j,1:(i-1)])+penMA)){
-                    Nma.opt <- nma
                     Inds.opt <- sort(Inds)
-=======
-                if(all(logBFs[j,i]>(logBFs[j,1:(i-1)]+penMA))){
                     Nma.opt <- nma
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
                     pss <- pp
                 }
             }
             if(j>1 & i>1){
-<<<<<<< HEAD
                 if(logBFs[j,i]>(max(logBFs[1:(j-1),1:i])+penI) & logBFs[j,i]>(max(logBFs[1:j,(1:i-1)])+penMA)){
-=======
-                if(all(logBFs[j,i]>(logBFs[1:(j-1),i]+penI)) & all(logBFs[j,i]>(logBFs[j,(1:i-1)]+penMA))){
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
                     Inds.opt <- sort(Inds)
                     Nma.opt <- nma
                     pss <- pp
@@ -1105,10 +1088,6 @@ combine.data <- function(data,Ninds,Nmas){
 ###data is a list of matrices
     out <- c()
     idata <- data
-<<<<<<< HEAD
-=======
-    cat('length(data)=',length(data),'\n')
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
     for(j in 1:length(data)){
         Inds <- Ninds[[j]]
         tab <- data[[j]]

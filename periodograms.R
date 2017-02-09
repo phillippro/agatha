@@ -139,31 +139,19 @@ gls <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
     if(norm=='HorneBaliunas'){
         power <- (N-1)*p/2
     }
-<<<<<<< HEAD
     m <- 1
     if(norm=='Cumming'){
         power <- ((N-2-m)/2)*p/(1-max(p))
-=======
-    if(norm=='Cumming'){
-        power <- ((N-3)/2)*p/(1-max(p))
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
     }
     PN <- power
     PN.max <- max(PN)
     peak.freq <- f[PN==PN.max]
     peak.per <- 1/f[PN==PN.max]
     FAP <- c(0.1,1e-2,1e-3)#significance level of FAP
-<<<<<<< HEAD
     level <- powerLevel(FAP,M,N,norm=norm,m=m)#power level
     pp <- M*prob(Pn=PN.max,N=N,norm=norm,m=m)
     if(pp>0.01){
         pp <- 1-(1-prob(Pn=PN.max,N=N,norm=norm,m=m))^M
-=======
-    level <- powerLevel(FAP,M,N,norm)#power level
-    pp <- M*prob(Pn=PN.max,N=N,norm=norm)
-    if(pp>0.01){
-        pp <- 1-(1-prob(Pn=PN.max,N=N,norm=norm))^M
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
     }
     ind <- which.max(pp)
     omega.opt <- omegas[ind]
@@ -249,10 +237,7 @@ glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
         chi2 <- sum(W*w*(y-yp)^2)
         p[k] <- (chi2.ref-chi2)/chi2.ref
     }
-<<<<<<< HEAD
     m <- 2#floating mean:1; floating trend: 2
-=======
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
     N <- length(y)
     M <- 2*nout/ofac#ref lsp
     if(norm=='Scargle'){
@@ -263,11 +248,7 @@ glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
         power <- (N-1)*p/2
     }
     if(norm=='Cumming'){
-<<<<<<< HEAD
         power <- ((N-2-m)/2)*p/(1-max(p))
-=======
-        power <- ((N-3)/2)*p/(1-max(p))
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
     }
     PN <- power
     PN.max <- max(PN)
@@ -275,17 +256,10 @@ glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
     peak.per <- 1/f[PN==PN.max]
 #    FAP <- c(0.317,0.046,3e-3)#significance level of FAP
     FAP <- c(0.1,0.01,0.001)
-<<<<<<< HEAD
     level <- powerLevel(FAP,M,N,norm,m=m)#power level
     pp <- M*prob(Pn=PN.max,N=N,norm=norm,m=m)
     if(pp>0.01){
         pp <- 1-(1-prob(Pn=PN.max,N=N,norm=norm,m=m))^M
-=======
-    level <- powerLevel(FAP,M,N,norm)#power level
-    pp <- M*prob(Pn=PN.max,N=N,norm=norm)
-    if(pp>0.01){
-        pp <- 1-(1-prob(Pn=PN.max,N=N,norm=norm))^M
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
     }
     P <- unit/f
     ind.max <- which.max(power)
@@ -317,7 +291,6 @@ glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
 }
 
 #give a power, calcuate the the p value
-<<<<<<< HEAD
 prob <- function(Pn,N,m,norm='Cumming'){
     if(norm=="Scargle") return(exp(-Pn))
     if(norm=="HorneBaliunas") return((1-2*Pn/(N-1))^((N-2-m)/2))
@@ -332,22 +305,6 @@ probInv <- function(Prob,N,m,norm='Cumming'){
 ####
 powerLevel <- function(FAPlevel,M,N,m,norm='Cumming'){
     return(probInv(1-(1-FAPlevel)^(1/M),N,norm,m=m))
-=======
-prob <- function(Pn,N,norm='Cumming'){
-    if(norm=="Scargle") return(exp(-Pn))
-    if(norm=="HorneBaliunas") return((1-2*Pn/(N-1))^((N-3)/2))
-    if(norm=="Cumming") return((1+2*Pn/(N-3))^(-(N-3)/2))
-}
-###Inverse of prob
-probInv <- function(Prob,N,norm='Cumming'){
-    if(norm=="Scargle") return(-log(Prob))
-    if(norm=="HorneBaliunas") return((N-1)/2*(1-Prob^(2/(N-3))))
-    if(norm=="Cumming") return((N-3)/2*(Prob^(-2/(N-3))-1))
-}
-####
-powerLevel <- function(FAPlevel,M,N,norm='Cumming'){
-    return(probInv(1-(1-FAPlevel)^(1/M),N,norm))
->>>>>>> b5e025edbde7a2e0f2efd93955bed3b91b57e553
 }
 
 lsp <- function (x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, alpha = 0.01) 
