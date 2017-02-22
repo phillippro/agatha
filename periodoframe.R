@@ -492,13 +492,13 @@ sopt <- function(pars,type='noise'){
     names(par.up) <- names(par.low) <- names(start)
 
 ##########numerical fit
-#    Ntry <- 1
+    Ntry <- 1
     if(type=='noise'){
 #    if(TRUE){
         start0 <- start
         pars <- c()
         likes <- c()
-        for(kk in 1:10){
+        for(kk in 1:Ntry){
             for(j in 1:5){
                 start <- as.list(rnorm(length(start),unlist(start0),as.numeric((par.up-par.low)/100)))
                 if(all(unlist(start)>par.low & unlist(start)<par.up)) break()
