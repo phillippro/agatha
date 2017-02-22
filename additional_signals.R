@@ -74,6 +74,7 @@ for(jj in 2:Nsig.max){
     }
     ylim <- c(min(rv.ls$power),max(rv.ls$power)+0.15*(max(rv.ls$power)-min(rv.ls$power)))
 #    if(sd(rr)<sd(rv.ls$res)) break()
+if(FALSE){
     if(per.type.seq=='BFP' | per.type.seq=='MLP'){
         if(per.type.seq=='BFP' & all(rv.ls$logBF.opt<log(150)))
             break()
@@ -83,6 +84,7 @@ for(jj in 2:Nsig.max){
         if(max(rv.ls$power) < max(rv.ls$sig.level))
             break()
     }
+}
 ####store data
     per.data <- cbind(per.data,rv.ls$power)
 #    tit <- paste('Periodogram: BGLS; Target:',instrument,'; Observable',ypar)
