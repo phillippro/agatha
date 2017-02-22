@@ -2,7 +2,7 @@ library(shiny)
 ############################################
 #####PartI: set parameters
 ############################################
-star <- 'ChallengeDataSet2'
+star <- 'HD10700'
 #star <- 'HD41248'
 #star <- 'GJ699'
 #star <- 'HD172555'
@@ -12,10 +12,10 @@ Nma <- 1
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
 #model.type <- 'auto'#manually setting the number of MA components and differential RVs
 model.type <- 'man'#automatically determine the optimal noise model
-tol <- 1e-16#numerical fitting precision tolerance
+tol <- 1e-12#numerical fitting precision tolerance
 Nap <- 1#number of aperture
 Nc <- 0#1
-per.types <- c('BFP')#the periodograms to calculate
+per.types <- c('MLP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
 sequential <- TRUE
 ###To select the numbers of differential RVs and MA components, it is better not to include calibration data.
@@ -39,8 +39,7 @@ if(!file.exists(f)){
 f <- paste0('data/',star,'_HARPS.dat')
 }
 tab <- read.table(f,header=TRUE)
-###test
-tab <- read.table('../data/rey17/HD17674_SOPHIE.dat')
+
 ############################################
 #####PartIII: prepare data
 ############################################
@@ -49,10 +48,6 @@ tab <- read.table('../data/rey17/HD17674_SOPHIE.dat')
 ########################
 #update <- FALSE
 #opt.types <- c('full','part','wr','rw','rep')
-if(ncol(tab)==3){
-NI <- 0
-Indices <- NA
-}
 ofac <- 1
 fmax <- 1#Pmin=0.5d
 mar.type <- 'part'
@@ -61,7 +56,7 @@ Ndata <- nrow(tab)
 cat('file:',f,';Ndata=',Ndata,'; Nma=',Nma,'; NI=',NI,'; Nap=',Nap,'; Nc=',Nc,'; opt.type=',opt.type,'; model.type=',model.type,'; ofac=',ofac,'; tol=',tol,'\n')
 
 ######rescale indices
-Indices <- NA
+Indices <- NULL
 sortInd <- FALSE
 if(ncol(tab)>3){
     Indices <- as.matrix(tab[,4:ncol(tab)])
