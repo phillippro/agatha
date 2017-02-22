@@ -11,7 +11,7 @@ if(NI>0){
     Inds <- 0
 }
 inds <- 1:2
-fname <- paste0('periodograms_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'modeltype',model.type,'_',star,'_NI',NI,'Nma',Nma,'_Nc',Nc,'_ofac',ofac,'_opt',opt.type,'_Nap',Nap)
+fname <- paste0('periodograms_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'modeltype',model.type,'_',star,'_NI',NI,'Nma',Nma,'_Nc',Nc,'_ofac',ofac,'_opt',opt.type,'_Nap',Nap,'v2')
 fname <- paste0('results/',fname)
 ######plot
 leg.pos <- 'topright'
@@ -60,6 +60,8 @@ if(per.type=='BFP'){
 ####MLP
 if(per.type=='MLP'){
     t1 <- proc.time()
+    cat('head(tab[,2])=',head(tab[,2]),'\n')
+    cat('Indices=',Indices,'\n')
     per <- MLP(tab[,1],tab[,2],tab[,3],Nma=Nma,Inds=Inds,ofac=ofac,mar.type='part',model.type=model.type,fmax=fmax,opt.par=NULL,Indices=Indices,MLP.type=MLP.type)
     t2 <- proc.time()
     dur2 <- format((t2-t1)[3],digit=3)
@@ -150,7 +152,7 @@ if(per.type=='LS'){
 ####find additional signals
 ############################
 if(sequential){
-    for(jj in 1:3){
+    for(jj in 1:2){
         cat('\nfind',jj+1,'signal!\n')
 ###make another BFP for data subtracted by the signal
         if(is.matrix(per$res)){
@@ -158,7 +160,7 @@ if(sequential){
         }else{
             rr <- per$res
         }
-#        cat('head(rr)=',head(rr),'\n')
+        cat('head(rr)=',head(rr),'\n')
         if(per.type=='BFP'){
             per <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax,progress=FALSE)
             ylim <- c(min(median(per$logBF),0),1.1*max(per$logBF))

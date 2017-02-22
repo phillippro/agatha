@@ -490,62 +490,39 @@ sopt <- function(pars,type='noise'){
         par.up <- c(par.up,logtau=logtau.max)
     }
     names(par.up) <- names(par.low) <- names(start)
-    if(Nma>0){
-        Ntry <- 1
-    }else{
-        Ntry <- 1
-    }
+
+##########numerical fit
 #    Ntry <- 1
-    tmp <- list()
-    lls <- c()
-    start0 <- start
-    if(Ntry>1){
-        for(kk in 1:Ntry){
-            if(kk>1 & exists('opt.par')){
-                start <- opt.par
-            }else{
-                start <- as.list(rnorm(length(start),unlist(start0),as.numeric((par.up-par.low)/10)))
-            }
-            if(all(unlist(start)<par.up) & all(unlist(start)>par.low)){
-                names(start) <- names(par.low)
-                out <- try(nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500)),TRUE)#ftol=1e-16,ptol=1e-16
-                if(class(out)!='try-error'){
-                    opt.par <- as.list(coef(out))
-#                    if(Nma>0){
-                    val <- rv.red(par=opt.par,df = df)
-#                    }else{
-#                        names(opt.par) <- names(par.low)
-#                        val <- rv.white(par=opt.par,df = df)
-#                        val <- rv.red(par=opt.par,df = df)
-#                    }
-                    logLmax <- sum(-(y-val$v)^2/(2*(dy^2+opt.par$sj^2))-0.5*log(2*pi)-0.5*log((dy^2+opt.par$sj^2)))
-                    tmp[[kk]] <- out
-                    lls <- c(lls,logLmax)
-                }
-            }
-        }
-        ind <- which.max(lls)
-        out <- tmp[[ind]]
-    }else{
+    if(type=='noise'){
+#    if(TRUE){
+        start0 <- start
+        pars <- c()
+        likes <- c()
         for(kk in 1:10){
             for(j in 1:5){
                 start <- as.list(rnorm(length(start),unlist(start0),as.numeric((par.up-par.low)/100)))
                 if(all(unlist(start)>par.low & unlist(start)<par.up)) break()
             }
             names(start) <- names(start0)
-#            cat('start=',unlist(start),'\n')
-#            cat('names(start)=',names(start),'\n')
             out <- try(nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500)),TRUE)#ftol=1e-16,ptol=1e-16#ftol=tol,ptol=tol
-            out <- nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500))
-            if(class(out)!='try-error') break()
+            if(class(out)!='try-error'){
+                opt.par <- as.list(coef(out))
+                yp <- rv.red(par=opt.par, df=df)$v
+                pars <- rbind(pars,unlist(start))
+                logLmax <- sum(-(y-yp)^2/(2*(dy^2+opt.par$sj^2))-0.5*log(2*pi)-0.5*log((dy^2+opt.par$sj^2)))
+                likes <- c(likes,logLmax)
+            }
         }
+        ind <- which.max(likes)
+        start <- as.list(pars[ind,])
+        names(start) <- names(start0)
     }
+    out <- nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500))
+
+
+#####retrieve parameters
     opt.par <- as.list(coef(out))
-#    if(Nma>0){
     tmp <- rv.red(par=opt.par,df = df)
-#    }else{
-#        tmp <- rv.white(par=opt.par,df = df)
-#    }
     nams <- c('gamma','beta')
     if(NI>0) nams <- c(nams,paste0('d',1:NI))
     if(type=='period') nams <- c('A','B',nams)
@@ -870,8 +847,6 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     if(is.null(opt.par) | MLP.type=='sub'){
         tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='noise',pars=vars)
         opt.par <- tmp$par
-#        cat('names(opt.par)=',names(opt.par),'\n')
-#        cat('sj=',opt.par$sj,'\n')
         if(MLP.type=='sub'){
             y <- tmp$res
             data[,2] <- y
@@ -966,11 +941,11 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
 
     logLmaxs <- array(data=NA,dim=c(length(NI.inds),length(Nmas)))
     logBFs <- array(data=NA,dim=c(length(NI.inds),length(Nmas)))
-#    withProgress(message = 'Calculating log(BF) table', value = 0, {
+    withProgress(message = 'Calculating log(BF) table', value = 0, {
     for(i in 1:length(Nmas)){
         nma <- Nmas[i]
         for(j in 1:length(NI.inds)){
-#            incProgress(1/(length(Nmas)*length(NI.inds)), detail = paste("MA:", nma,'; Proxies:',paste(NI.inds[[j]],collapse=',')))
+            incProgress(1/(length(Nmas)*length(NI.inds)), detail = paste("MA:", nma,'; Proxies:',paste(NI.inds[[j]],collapse=',')))
             if(!all(NI.inds[[j]]==0)){
                 ni <- length(NI.inds[[j]])
                 Inds <- NI.inds[[j]]
@@ -1059,7 +1034,7 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
             }
         }
     }
-#    })
+    })
     cat('The optimal Nma=',Nma.opt,'Inds=',Inds.opt,'\n')
     return(list(Nma=Nma.opt,Inds=Inds.opt,logBFs=logBFs))
 }
@@ -1360,18 +1335,13 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
                 tmp[['power']] <- pps[inds]
                 tmp[['P']] <- ps[inds]
             }
-            if(per.type!='MLP' & per.type!='BFP'){
-                index <- sort(tmp$P,index.return=TRUE)$ix
-                ##scaling the power
-                if(nrow(rel.powers)!=length(index)){
-                    rel.powers <- powers <- array(data=NA,dim=c(length(index),nbin))
-                }
-                rel.powers[,j+1] <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
-                powers[,j+1] <- tmp$power[index]
+            index <- sort(tmp$P,index.return=TRUE)$ix
+            powers[,j+1] <- tmp$power[index]
+            rel.powers[,j+1] <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
+            if(per.type=='MLP' | per.type=='BGLS'){
+                powers[,j+1] <- tmp$power[index]-max(tmp$power[index])
             }else{
-                index <- sort(tmp$P,index.return=TRUE)$ix
-                powers[,j+1] <- tmp$logBF[index]
-                rel.powers[,j+1] <- (tmp$logBF[index]-mean(tmp$logBF[index]))/(max(tmp$logBF[index])-mean(tmp$logBF[index]))
+                powers[,j+1] <- tmp$power[index]
             }
             ndata[j+1] <- length(inds)
         }
@@ -1415,18 +1385,13 @@ MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indice
                 tmp[['power']] <- pps[inds]
                 tmp[['P']] <- ps[inds]
             }
-            if(per.type!='MLP' & per.type!='BFP'){
-                index <- sort(tmp$P,index.return=TRUE)$ix
-                ##scaling the power
-                if(nrow(rel.powers)!=length(index)){
-                    rel.powers <- powers <- array(data=NA,dim=c(length(index),nbin))
-                }
-                rel.powers[,j+1] <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
-                powers[,j+1] <- tmp$power[index]
+            index <- sort(tmp$P,index.return=TRUE)$ix
+            powers[,j+1] <- tmp$power[index]
+            rel.powers[,j+1] <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
+            if(per.type=='MLP' | per.type=='BGLS'){
+                powers[,j+1] <- tmp$power[index]-max(tmp$power[index])
             }else{
-                index <- sort(tmp$P,index.return=TRUE)$ix
-                powers[,j+1] <- tmp$logBF[index]
-                rel.powers[,j+1] <- (tmp$logBF[index]-mean(tmp$logBF[index]))/(max(tmp$logBF[index])-mean(tmp$logBF[index]))
+                powers[,j+1] <- tmp$power[index]
             }
             ndata[j+1] <- length(inds)
         }

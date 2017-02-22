@@ -4,7 +4,6 @@ leg.pos <- 'topright'
 ############################
 ####find additional signals
 ############################
-cat('Nsig.max=',Nsig.max,'\n')
 for(jj in 2:Nsig.max){
     cat('\nfind',jj,'signal!\n')
     if(jj==2){
@@ -52,7 +51,7 @@ for(jj in 2:Nsig.max){
     }
     if(per.type.seq=='MLP'){
         rv.ls <- MLP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,ofac=ofac,mar.type='part',model.type='man',fmin=frange[1],fmax=frange[2],opt.par=NULL,Indices=Indices,MLP.type=MLP.type)
-        ylab <- 'log(ML)'
+        ylab <- expression('log(ML/'*ML[max]*')')
         name <- 'logML'
     }
     if(per.type.seq=='GLS'){
@@ -61,8 +60,8 @@ for(jj in 2:Nsig.max){
     }
     if(per.type.seq=='BGLS'){
         rv.ls <- bgls(tab[,1],rr,tab[,3],ofac=ofac,fmin=frange[1],fmax=frange[2])
+        ylab <- expression('log(ML/'*ML[max]*')')
         name <- 'logML'
-        ylab <- 'log(ML)'
     }
     if(per.type.seq=='GLST'){
         rv.ls <- glst(tab[,1],rr,tab[,3],ofac=ofac,fmin=frange[1],fmax=frange[2])
@@ -86,7 +85,18 @@ if(FALSE){
     }
 }
 ####store data
-    per.data <- cbind(per.data,rv.ls$power)
+    if(per.type=='BFP'){
+        yy  <- rv.ls$logBF
+    }else if(per.type=='MLP'){
+        yy  <- rv.ls$logBF-max(rv.ls$logBF)
+        rv.ls$sig.level <- NULL#max(yy)-log(c(10,100,1000))
+    }else if(per.type=='BGLS'){
+        yy  <- rv.ls$power-max(rv.ls$power)
+        rv.ls$sig.level <- NULL#max(yy)-log(c(10,100,1000))
+    }else{
+        yy <- rv.ls$power
+    }
+    per.data <- cbind(per.data,yy)
 #    tit <- paste('Periodogram: BGLS; Target:',instrument,'; Observable',ypar)
     tit <- paste0(per.type.seq,';',instrument,';',ypar,';',jj,' signal')
     tits <- c(tits,tit)

@@ -102,7 +102,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 name <- 'power'
             }else if(per.type=='BGLS'){
                 rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=y,err=dy,ofac=ofac,fmin=frange[1],fmax=frange[2])
-                ylab <- 'log(ML)'
+                ylab <- expression('log(ML/'*ML[max]*')')
                 name <- 'logML'
             }else if(per.type=='BFP'){
                 rv.ls <- BFP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,
@@ -116,7 +116,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 }else{
                     rv.ls <- MLP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,fmin=frange[1],fmax=frange[2],MLP.type=MLP.type)
                 }
-                ylab <- 'log(ML)'
+                ylab <- expression('log(ML/'*ML[max]*')')
                 name <- 'logML'
             }else if(per.type=='LS'){
                 rv.ls <- lsp(times=tab[,1]-min(tab[,1]),x=y,ofac=ofac,from=frange[1],to=frange[2],alpha=c(0.1,0.01,0.001))
@@ -129,13 +129,8 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             y <- rep(1,nrow(tab))
             rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=rep(2,nrow(tab)),err=rep(0.2,nrow(tab)), ofac=ofac,fmin=frange[1],fmax=frange[2])
             tit <- paste0('BGLS;',instrument,';',ypar,'; 1 signal')
-            ylab <- 'log(ML)'
+            ylab <- expression('log(ML/'*ML[max]*')')
             name <- 'logML'
-        }
-        if(length(rv.ls$sig.level)<3){
-            sig.levels <- cbind(sig.levels,c(rv.ls$sig.level,rep(NA,3-length(rv.ls$sig.level))))
-        }else{
-            sig.levels <- cbind(sig.levels,rv.ls$sig.level)
         }
         ylabs <- c(ylabs,ylab)
         tits <- c(tits,tit)
@@ -145,9 +140,11 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         if(per.type=='BFP'){
             yy  <- rv.ls$logBF
         }else if(per.type=='MLP'){
-            yy  <- rv.ls$logBF#-max(rv.ls$logBF)
+            yy  <- rv.ls$logBF-max(rv.ls$logBF)
+            rv.ls$sig.level <- NULL#max(yy)-log(c(10,100,1000))
         }else if(per.type=='BGLS'){
-            yy  <- rv.ls$power#-max(rv.ls$power)
+            yy  <- rv.ls$power-max(rv.ls$power)
+            rv.ls$sig.level <- NULL#max(yy)-log(c(10,100,1000))
         }else{
             yy <- rv.ls$power
         }
@@ -160,8 +157,13 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 yy <- yy[-length(yy)]
             }
         }
+        if(length(rv.ls$sig.level)<3){
+            sig.levels <- cbind(sig.levels,c(rv.ls$sig.level,rep(NA,3-length(rv.ls$sig.level))))
+        }else{
+            sig.levels <- cbind(sig.levels,rv.ls$sig.level)
+        }
         if(i==1) per.data <- cbind(per.data,rv.ls$P)
-        per.data <- cbind(per.data,rv.ls$power)
+        per.data <- cbind(per.data,yy)
         inds <- (ncol(per.data)-1):ncol(per.data)
         if(i==1)  cnames <- c(cnames,'P')
         cnames <- c(cnames,paste0(pers[i],'1signal:',gsub(' .+','',ypar),':',name))
