@@ -4,6 +4,7 @@ leg.pos <- 'topright'
 ############################
 ####find additional signals
 ############################
+cat('Nsig.max=',Nsig.max,'\n')
 for(jj in 2:Nsig.max){
     cat('\nfind',jj,'signal!\n')
     if(jj==2){

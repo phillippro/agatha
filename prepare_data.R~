@@ -15,9 +15,9 @@ model.type <- 'man'#automatically determine the optimal noise model
 tol <- 1e-16#numerical fitting precision tolerance
 Nap <- 1#number of aperture
 Nc <- 0#1
-per.types <- c('BFP')#the periodograms to calculate
+per.types <- c('MLP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
-sequential <- TRUE
+sequential <- FALSE
 ###To select the numbers of differential RVs and MA components, it is better not to include calibration data.
 if(model.type=='auto'){
     Nc <- 0
@@ -40,7 +40,7 @@ f <- paste0('data/',star,'_HARPS.dat')
 }
 tab <- read.table(f,header=TRUE)
 ###test
-tab <- read.table('../data/rey17/HD17674_SOPHIE.dat')
+tab <- read.table('../../variable_sources/Fan17/fan17_optical.dat')
 ############################################
 #####PartIII: prepare data
 ############################################

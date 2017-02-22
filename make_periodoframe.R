@@ -30,7 +30,7 @@ for(kk in 1:length(per.types)){
 ####BFP
 if(per.type=='BFP'){
     t1 <- proc.time()
-    per <- BFP(tab[,1],tab[,2],tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax,tol=tol,progress=FALSE)
+    per <- BFP(tab[,1],tab[,2],tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax,progress=FALSE)
     t2 <- proc.time()
     dur1 <- format((t2-t1)[3],digit=3)
     cat('BFP computation time:',dur1,'s\n\n')
@@ -150,7 +150,7 @@ if(per.type=='LS'){
 ####find additional signals
 ############################
 if(sequential){
-    for(jj in 1:5){
+    for(jj in 1:3){
         cat('\nfind',jj+1,'signal!\n')
 ###make another BFP for data subtracted by the signal
         if(is.matrix(per$res)){
@@ -160,7 +160,7 @@ if(sequential){
         }
 #        cat('head(rr)=',head(rr),'\n')
         if(per.type=='BFP'){
-            per <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax,tol=tol,progress=FALSE)
+            per <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax,progress=FALSE)
             ylim <- c(min(median(per$logBF),0),1.1*max(per$logBF))
             ylab <- 'log(BF)'
         }

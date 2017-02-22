@@ -272,7 +272,7 @@ rv.red <- function(par,df){
             vec.rh <- c(YCp,YSp,YWp,YTp)
         }
     }
-    white.par <- solve(lin.mat,vec.rh,tol=tol)#gamma,beta,dj
+    white.par <- try(solve(lin.mat,vec.rh,tol=tol))#gamma,beta,dj
     ind0 <- length(white.par)-NI-1
     r <- white.par[ind0]+white.par[ind0+1]*t
     if(NI>0){
@@ -473,6 +473,7 @@ sopt <- function(pars,type='noise'){
     tmp <- data.frame(t,y,dy)
     df <- list(data=tmp,Indices=Indices,par.fix=par.fix,Nma=Nma,NI=NI,type=type,ts=ts,cs=cs,ss=ss,Is=Is,ys=ys)
 ####
+
     start <- list()
     par.low <- par.up <- c()
     start$sj <- sj.ini
@@ -535,7 +536,7 @@ sopt <- function(pars,type='noise'){
 #            cat('start=',unlist(start),'\n')
 #            cat('names(start)=',names(start),'\n')
             out <- try(nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500)),TRUE)#ftol=1e-16,ptol=1e-16#ftol=tol,ptol=tol
-#            out <- nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500))
+            out <- nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500))
             if(class(out)!='try-error') break()
         }
     }
@@ -617,6 +618,8 @@ par.integral <- function(data,Indices,sj,m,d,type='noise',logtau=NULL,omega=NULL
     t <- data[,1]
     y <- data[,2]
     dy <- data[,3]
+    ind <- which(dy==0)
+    dy[ind] <- 1e-6
     W <- sum(1/(dy^2+sj^2))#new weight sum is 1.
     w <- 1/(dy^2+sj^2)/W#normalized weighting
     if(Nma>0){
@@ -867,6 +870,8 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     if(is.null(opt.par) | MLP.type=='sub'){
         tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='noise',pars=vars)
         opt.par <- tmp$par
+#        cat('names(opt.par)=',names(opt.par),'\n')
+#        cat('sj=',opt.par$sj,'\n')
         if(MLP.type=='sub'){
             y <- tmp$res
             data[,2] <- y
@@ -1401,7 +1406,7 @@ MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indice
             }else if(per.type=='MLP'){
                 tmp <- MLP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,...)
             }else if(per.type=='BFP'){
-                tmp <- BFP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,...)
+                tmp <- BFP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,progress=FALSE,...)
             }else if(per.type=='LS'){
                 tmp <- lsp(times=t[inds],x=y[inds],ofac=ofac,from=fmin,to=fmax,tspan=Dt,alpha=c(0.1,0.01,0.001))
                 ps <- 1/tmp$scanned

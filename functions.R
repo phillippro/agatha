@@ -165,7 +165,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         inds <- (ncol(per.data)-1):ncol(per.data)
         if(i==1)  cnames <- c(cnames,'P')
         cnames <- c(cnames,paste0(pers[i],'1signal:',gsub(' .+','',ypar),':',name))
-        if(exists('per.type.seq') & ypar=='RV'){
+        if(exists('per.type.seq') & ypar==ns[1]){
             if(per.type==per.type.seq){
                 source('additional_signals.R',local=TRUE)
             }
