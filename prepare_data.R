@@ -2,13 +2,14 @@ library(shiny)
 ############################################
 #####PartI: set parameters
 ############################################
-#star <- 'HD10700'
-star <- 'HD41248'
+#star <- 'ChallengeDataSet2'
+star <- 'ChallengeDataSet2'
 #star <- 'GJ699'
 #star <- 'HD172555'
 np <- 0
 NI <- 3
-Nma <- 1
+Nma <- 0
+Np <- 0
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
 #model.type <- 'auto'#manually setting the number of MA components and differential RVs
 model.type <- 'man'#automatically determine the optimal noise model
@@ -17,7 +18,10 @@ Nap <- 1#number of aperture
 Nc <- 0#1
 per.types <- c('BFP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
-sequential <- FALSE
+per.type.seq <- per.types[1]
+sequential <- TRUE
+quantify <- TRUE
+Np.max <- 5
 ###To select the numbers of differential RVs and MA components, it is better not to include calibration data.
 if(model.type=='auto'){
     Nc <- 0
@@ -34,13 +38,22 @@ MLP.type <- 'sub'#subtract the correlated noise from the data and then marginali
 ############################################
 #####PartII: load data
 ############################################
-f <- paste0('data/',star,'_HARPS_TERRA.dat')
-if(!file.exists(f)){
-f <- paste0('data/',star,'_HARPS.dat')
+#f <- paste0('data/',star,'_HARPS_TERRA.dat')
+#if(!file.exists(f)){
+#f <- paste0('data/',star,'_HARPS.dat')
+#}
+loading <- FALSE
+if(loading){
+#file <- 'keppure_priormt_12eppar1_Ndata221_quantifyTRUE_1per1_Pmin1Pmax3689_Nw1ABTRUE_Nap0_modedata_HD41248_HARPS_TERRA_1AP1_ervab0ap_nosim_1planet_ARMAp0q1_0momc0_Nsamp2000000_tem1_acc2.3_pretem0.311P25.6d_negLmax506'
+    file <- 'keppure_priormt_talklike_Ndata221_quantifyTRUE_1per1_Pmin0.5Pmax7378_Nw1ABTRUE_Nap0_modedata_HD41248_HARPS_TERRA_1AP1_ervab0ap_smallerrFALSE_3planet_ARMA01_0momc3.2_Nsamp10000000_tem1_acc0.12_pretem1P13.4d26.2d290.4d_negLmax474'
+    load(paste0('output/',star,'/',file,'.Robj'),envir=e <- new.env())
+    tab <- cbind(e$trv,e$res,e$eRV)
+    Np <- e$Np
+}else{
+    file <- paste0('data/',star,'_HARPS.dat')
+    tab <- read.table(file,header=TRUE,check.names=FALSE)
 }
-tab <- read.table(f,header=TRUE)
-###test
-tab <- read.table('../data/rey17/HD42012_SOPHIE.dat')
+NI0 <- NI <- ncol(tab)-3
 ############################################
 #####PartIII: prepare data
 ############################################
@@ -49,16 +62,12 @@ tab <- read.table('../data/rey17/HD42012_SOPHIE.dat')
 ########################
 #update <- FALSE
 #opt.types <- c('full','part','wr','rw','rep')
-if(ncol(tab)==3){
- NI <- 0
-}
-
 ofac <- 1
-fmax <- 0.1#Pmin=0.5d
+fmax <- 1#Pmin=0.5d
 mar.type <- 'part'
 Ndata <- nrow(tab)
 #model.type <- 'MA'#'MA' or 'auto'
-cat('file:',f,';Ndata=',Ndata,'; Nma=',Nma,'; NI=',NI,'; Nap=',Nap,'; Nc=',Nc,'; opt.type=',opt.type,'; model.type=',model.type,'; ofac=',ofac,'; tol=',tol,'\n')
+cat('Ndata=',Ndata,'; Nma=',Nma,'; NI=',NI,'; Nap=',Nap,'; Nc=',Nc,'; opt.type=',opt.type,'; model.type=',model.type,'; ofac=',ofac,'; tol=',tol,'\n')
 
 ######rescale indices
 Indices <- NA

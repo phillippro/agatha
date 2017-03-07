@@ -10,7 +10,7 @@ source('functions.R',local=TRUE)
 Nmax.plots <- 50
 count0 <- 0
 instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK','APF','PFS')
-tol <- 1e-16
+tol <- 1e-20
 data.files <- list.files(path='data',full.name=FALSE)
 
 shinyServer(function(input, output, session) {
@@ -624,7 +624,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
 
   observeEvent(input$compare,{
       output$BFtab <- renderUI({
-          output$table <- renderTable({model.selection()$logBF},digits=1,caption = "BIC-estimated Bayes factor",rownames=TRUE,colnames=TRUE,
+          output$table <- renderTable({model.selection()$logBF},digits=1,caption = "Logarithmic BIC-estimated Bayes factor",rownames=TRUE,colnames=TRUE,
                                       caption.placement = getOption("xtable.caption.placement", "top"),
                                       caption.width = getOption("xtable.caption.width", NULL))
           tableOutput('table')

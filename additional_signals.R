@@ -5,47 +5,14 @@ leg.pos <- 'topright'
 ####find additional signals
 ############################
 for(jj in 2:Nsig.max){
-    cat('\nfind',jj,'signal!\n')
-    if(jj==2){
-        rr <- tab[,2]
-    }else{
-        if(is.matrix(rv.ls$res)){
-            rr <- rv.ls$res[1,]
-        }else{
-            rr <- rv.ls$res
-        }
-    }
-    ####oversampling the signal proximity to find precise periodicity
-    if(per.type.seq=='BFP'){
-        tmp <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,opt.type='sl',model.type='man',fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
-    }
-    if(per.type.seq=='MLP'){
-        if(length(per.target)>1){
-            Nma <- 0
-            Inds <- 0
-        }
-        tmp <- MLP(t=tab[,1]-min(tab[,1]),y=rr,dy=dy,Nma=Nma,Inds=Inds,Indices=Indices,ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1],MLP.type=MLP.type)
-    }
-    if(per.type.seq=='GLS'){
-        tmp <- gls(tab[,1]-min(tab[,1]),rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
-    }
-    if(per.type.seq=='BGLS'){
-        tmp <- bgls(tab[,1],rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
-    }
-    if(per.type.seq=='GLST'){
-        tmp <- glst(tab[,1],rr,tab[,3],ofac=10,fmin=0.8/rv.ls$ps[1],fmax=1.2/rv.ls$ps[1])
-    }
-    if(per.type.seq=='LS'){
-        tmp <- lsp(times=tab[,1],x=rr,ofac=10,from=0.8/rv.ls$ps[1],to=1.2/rv.ls$ps[1])
-    }
+    cat('\n Find',jj,'signal!\n')
     if(is.matrix(rv.ls$res)){
-        rr <- tmp$res[1,]
+        rr <- rv.ls$res[1,]
     }else{
-        rr <- tmp$res
+        rr <- rv.ls$res
     }
-#####the following periodograms are for
     if(per.type.seq=='BFP'){
-        rv.ls <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type='sl',model.type='man',fmin=frange[1],fmax=frange[2])
+        rv.ls <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type='sl',model.type='man',fmin=frange[1],fmax=frange[2],quantify=quantify)
         ylab <- 'log(BF)'
         name <- 'logBF'
     }
@@ -72,23 +39,11 @@ for(jj in 2:Nsig.max){
         name <- ylab <- 'Power'
     }
     ylim <- c(min(rv.ls$power),max(rv.ls$power)+0.15*(max(rv.ls$power)-min(rv.ls$power)))
-#    if(sd(rr)<sd(rv.ls$res)) break()
-if(FALSE){
-    if(per.type.seq=='BFP' | per.type.seq=='MLP'){
-        if(per.type.seq=='BFP' & all(rv.ls$logBF.opt<log(150)))
-            break()
-        if(per.type.seq=='MLP' & all(rv.ls$logBF.opt<log(1000)))
-            break()
-    }else{
-        if(max(rv.ls$power) < max(rv.ls$sig.level))
-            break()
-    }
-}
 ####store data
     if(per.type=='BFP'){
-        yy  <- rv.ls$logBF
+        yy  <- rv.ls$power
     }else if(per.type=='MLP'){
-        yy  <- rv.ls$logBF-max(rv.ls$logBF)
+        yy  <- rv.ls$power-max(rv.ls$power)
         rv.ls$sig.level <- NULL#max(yy)-log(c(10,100,1000))
     }else if(per.type=='BGLS'){
         yy  <- rv.ls$power-max(rv.ls$power)

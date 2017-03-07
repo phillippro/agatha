@@ -655,9 +655,9 @@ par.integral <- function(data,Indices,sj,m,d,type='noise',logtau=NULL,omega=NULL
         }else{
             ss <- cc <- 0
         }
-        CCpp <- sum(w*(cos(omega*t)+cc)^2)
-        SSpp <- sum(w*(sin(omega*t)+ss)^2)
-        CSpp <- sum(w*(sin(omega*t)+ss)*(cos(omega*t)+cc))
+        CCpp <- sum(w*(cos(omega*t)-cc)^2)
+        SSpp <- sum(w*(sin(omega*t)-ss)^2)
+        CSpp <- sum(w*(sin(omega*t)-ss)*(cos(omega*t)-cc))
         phi <- 0.5*atan(2*CSpp/(CCpp-SSpp))
         phip <- 0.5*atan(sum(w*sin(2*omega*t))/sum(w*cos(2*omega*t)))
 ###define notations using the determined phase
@@ -667,8 +667,8 @@ par.integral <- function(data,Indices,sj,m,d,type='noise',logtau=NULL,omega=NULL
         }else{
             ss <- cc <- 0
         }
-        cp <- cos(omega*t-phi)+cc
-        sp <- sin(omega*t-phi)+ss
+        cp <- cos(omega*t-phi)-cc
+        sp <- sin(omega*t-phi)-ss
         Cp <- sum(w*cp)
         Sp <- sum(w*sp)
         CCp <- sum(w*cp^2)
@@ -1105,7 +1105,7 @@ combine.data <- function(data,Ninds,Nmas){
 }
 
 ####Bayes factor periodogram
-BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',progress=TRUE){
+BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',progress=TRUE,quantify=FALSE){
   #  unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
     unit <- 1
     if(all(Inds==0)){
@@ -1134,6 +1134,8 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     if(is.null(fmax)){
         fmax <- hifac*fnyq
     }
+    Nrep <- 1
+    if(quantify) Nrep <- 2
     if(sampling=='logP'){
         logP.max <- log(1/fmin)
         logP.min <- log(1/fmax)
@@ -1207,6 +1209,9 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     logLmax <- rep(NA,length(omegas))
     Npar <- length(tmp$par)
     opt.pars <- array(NA,dim=c(length(f),Npar+2))
+    P <- c()
+    for(nn in 1:Nrep){
+        P <- c(unit/f,P)
     if(progress){
         withProgress(message = 'Calculating BFP', value = 0, {
             for(kk in 1:length(f)){
@@ -1254,9 +1259,37 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
             p[kk] <- (chi2.ref-chi2)/chi2.ref
         }
     }
+####signals
+        Pmax <- P[which.max(logLmax)]
+    if(quantify & nn==1){
+        ind.max <- which.max(logLmax)
+        fmin <- 0.9*f[ind.max]
+        fmax <- 1.1*f[ind.max]
+###oversampling
+        f <- seq(fmin,fmax,by=step/20)*unit
+#        f <- seq(fmin,fmax,length.out=1000)*unit
+        Nf <- length(f)
+        omegas <- f*2*pi
+        logLmax <- c(rep(NA,length(f)),logLmax)
+        opt.pars <- rbind(array(data=NA,dim=c(length(f),ncol(opt.pars))),opt.pars)
+    }else if(quantify & nn==2){
+        ind.max <- which.max(logLmax)
+        if(ind.max<Nf){
+            ind.rm <- (1:Nf)[-ind.max]
+        }else{
+            ind.rm <- (1:Nf)
+        }
+        P <- P[-ind.rm]
+        logLmax <- logLmax[-ind.rm]
+        opt.pars <- opt.pars[-ind.rm,]
+    }
+}
     colnames(opt.pars) <- names(opt$par)
+    inds <- sort(P,index.return=TRUE)$ix
+    P <- P[inds]
+    opt.pars <- opt.pars[inds,]
+    logLmax <- logLmax[inds]
     logBF <- logLmax-logLmax0-log(length(y))#BIC-estimated BF; the extra free parameter n=2, which are {A, B}
-    P <- unit/f
 ####signals
     ind.max <- which.max(logBF)
     inds <- which(logBF>(max(logBF)+log(0.01)))

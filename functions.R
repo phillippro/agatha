@@ -105,9 +105,19 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 ylab <- expression('log(ML/'*ML[max]*')')
                 name <- 'logML'
             }else if(per.type=='BFP'){
+                if(exists('per.type.seq')){
+                    if(per.type.seq=='BFP'){
+                        quantify <- TRUE
+#                        quantify <- FALSE
+                    }else{
+                        quantify <- FALSE
+                    }
+                }else{
+                    quantify <- FALSE
+                }
                 rv.ls <- BFP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,
                              Nma=Nma,Inds=Inds,model.type='man',Indices=Indices,
-                             ofac=ofac,fmin=frange[1],fmax=frange[2])
+                             ofac=ofac,fmin=frange[1],fmax=frange[2],quantify=quantify)
                 ylab <- 'log(BF)'
                 name <- 'logBF'
             }else if(per.type=='MLP'){
@@ -163,6 +173,8 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             sig.levels <- cbind(sig.levels,rv.ls$sig.level)
         }
         if(i==1) per.data <- cbind(per.data,rv.ls$P)
+        cat('length(per.data)=',length(per.data),'\n')
+        cat('length(yy)=',length(yy),'\n')
         per.data <- cbind(per.data,yy)
         inds <- (ncol(per.data)-1):ncol(per.data)
         if(i==1)  cnames <- c(cnames,'P')
