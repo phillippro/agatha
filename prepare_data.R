@@ -19,7 +19,7 @@ Nc <- 0#1
 per.types <- c('BFP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
 per.type.seq <- per.types[1]
-sequential <- TRUE
+sequential <- FALSE
 quantify <- TRUE
 Np.max <- 5
 ###To select the numbers of differential RVs and MA components, it is better not to include calibration data.

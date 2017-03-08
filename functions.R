@@ -108,7 +108,6 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 if(exists('per.type.seq')){
                     if(per.type.seq=='BFP'){
                         quantify <- TRUE
-#                        quantify <- FALSE
                     }else{
                         quantify <- FALSE
                     }
@@ -147,12 +146,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         pers <- c(pers,per.type)
 ###plot
 #        plotname <- paste("plot", i, sep="")
-        if(per.type=='BFP'){
-            yy  <- rv.ls$logBF
-        }else if(per.type=='MLP'){
-            yy  <- rv.ls$logBF-max(rv.ls$logBF)
-            rv.ls$sig.level <- NULL#max(yy)-log(c(10,100,1000))
-        }else if(per.type=='BGLS'){
+        if(per.type=='MLP' | per.type=='BGLS'){
             yy  <- rv.ls$power-max(rv.ls$power)
             rv.ls$sig.level <- NULL#max(yy)-log(c(10,100,1000))
         }else{
@@ -173,8 +167,6 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             sig.levels <- cbind(sig.levels,rv.ls$sig.level)
         }
         if(i==1) per.data <- cbind(per.data,rv.ls$P)
-        cat('length(per.data)=',length(per.data),'\n')
-        cat('length(yy)=',length(yy),'\n')
         per.data <- cbind(per.data,yy)
         inds <- (ncol(per.data)-1):ncol(per.data)
         if(i==1)  cnames <- c(cnames,'P')

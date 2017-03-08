@@ -1262,6 +1262,9 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
 ####signals
         Pmax <- P[which.max(logLmax)]
     if(quantify & nn==1){
+        P1 <- P
+        logLmax1 <- logLmax
+        opt.pars1 <- opt.pars
         ind.max <- which.max(logLmax)
         fmin <- 0.9*f[ind.max]
         fmax <- 1.1*f[ind.max]
@@ -1274,21 +1277,18 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
         opt.pars <- rbind(array(data=NA,dim=c(length(f),ncol(opt.pars))),opt.pars)
     }else if(quantify & nn==2){
         ind.max <- which.max(logLmax)
+        ind1 <- which.max(logLmax1)
         if(ind.max<Nf){
-            ind.rm <- (1:Nf)[-ind.max]
-        }else{
-            ind.rm <- (1:Nf)
+            P1[ind1] <- P[ind.max]
+            logLmax1[ind1] <- logLmax[ind.max]
+            opt.pars1[ind1,] <- opt.pars[ind.max,]
         }
-        P <- P[-ind.rm]
-        logLmax <- logLmax[-ind.rm]
-        opt.pars <- opt.pars[-ind.rm,]
+        P <- P1
+        logLmax <- logLmax1
+        opt.pars <- opt.pars1
     }
 }
     colnames(opt.pars) <- names(opt$par)
-    inds <- sort(P,index.return=TRUE)$ix
-    P <- P[inds]
-    opt.pars <- opt.pars[inds,]
-    logLmax <- logLmax[inds]
     logBF <- logLmax-logLmax0-log(length(y))#BIC-estimated BF; the extra free parameter n=2, which are {A, B}
 ####signals
     ind.max <- which.max(logBF)

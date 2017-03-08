@@ -102,7 +102,7 @@ for(kk in 1:length(per.types)){
         }else{
             plot(per$P,per$power,xlab='Period[d]',ylab=ylab,type='l',log='x',ylim=ylim,main=main)
         }
-        if(is.null(inds)){
+        if(length(inds)==0){
             inds <- which(per$power.opt>max(per$sig.level))
             if(length(inds)>0) inds <- inds[1:min(nshow,length(inds))]
         }
