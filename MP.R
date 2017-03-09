@@ -4,31 +4,34 @@ library(magicaxis)
 library(minpack.lm)
 source('periodoframe.R')
 #source('periodograms.R')
-source('prepare_data.R',local=TRUE)
+#source('prepare_data.R',local=TRUE)
 ########################################
 #####part I: making MP
 ########################################
 ###parameters setting
+Nwindow <- 2
+colors <- c('black','red','blue','green','orange','brown','cyan','pink')
 if(NI>0){
     Inds <- 1:NI
 }else{
     Inds <- 0
 }
-Dt <- 1000#time span of the time window
-Nbin <- 10#the steps required to cover the whole data baseline by moving the window
-ofac0 <- 1#over sampling factor
+Dt <- 2000#time span of the time window
+Nbin <- 100#the steps required to cover the whole data baseline by moving the window
+ofac0 <- 20#over sampling factor
 per.type <- 'MLP'##type of moving periodogram: 'MLP' or 'BFP' or 'gls' or 'bgls'
-fmax <- 0.1#truncate to Pmin=10d
+fmax <- 0.01#truncate to Pmin=10d
+fmin <- 1e-3
 #fmax <- 1
 t1 <- proc.time()
-mp <- MP.norm(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac0,fmax=fmax,per.type=per.type,sj=0,Nma=Nma,Inds=Inds,tol=1e-16)
+mp <- MP.norm(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac0,fmin=fmin,fmax=fmax,per.type=per.type,sj=0,Nma=Nma,Inds=Inds)
 t2 <- proc.time()
 dur <- format((t2-t1)[3],digit=3)
 cat('computation time for MP:', dur,'s\n')
 fname0 <- fname <- paste0(star,'_',per.type,'_Dt',Dt,'_Nbin',Nbin,'_ofac',ofac0)
-cat('save data into Robj file:\n')
-cat(paste0(fname,'.Robj'),'\n')
 dir <- 'results/'
+#cat('save data into Robj file:\n')
+#cat(paste0(fname,'.Robj'),'\n')
 ###save data; optional
 #save(list = ls(all.names = TRUE),file=paste0(dir,fname,'.Robj'))
 
@@ -43,9 +46,9 @@ FP <- FALSE#whether to show false positives
 truncate <- TRUE
 if(truncate){
     if(type=='abs'){
-        alpha <- 8
+        alpha <- 15
     }else{
-        alpha <- 2
+        alpha <- 5
     }
     rs <- 0.0
 }else{
@@ -55,7 +58,7 @@ if(truncate){
 fname <- paste0(fname0,'_',type)#alpha',alpha
 ####prepare data for plot
 xx <- mp$tmid
-yy <- mp$ps
+yy <- mp$P
 if(type=='abs'){
     zz <- mp$powers
 }else{
@@ -80,25 +83,42 @@ pdf(pdf.name,6,6)
 par(cex.axis=size,cex.lab=size,cex=size)
 layout(matrix(1:4, ncol = 2,byrow=TRUE), widths = 1, heights = c(2,4), respect = FALSE)
 ###data plot
-for(j in 1:2){
+for(j in 1:Nwindow){
     if(j==1){
         par(mar = c(0, 5.1, 1, 0))
     }else{
         par(mar= c(0, 0, 1, 4.1))
     }
-###plot
     if(j==1){
-        plot(t,y,ylab='RV[m/s]',xaxt='n',pch=20,cex=0.5)
+        yaxt <- 's'
     }else{
-        plot(t,y,ylab='RV[m/s]',xaxt='n',yaxt='n',pch=20,cex=0.5)
+        yaxt <- 'n'
+    }
+###plot
+    if(Nw>1){
+        for(k in 1:Nw){
+            if(!grepl('LICK',data.names[k])){
+                trv <- par.data[[k]]$trv
+                rv <- par.data[[k]]$RV2
+                erv <- par.data[[k]]$eRV
+                if(k==1){
+                    plot(trv,rv,ylab='RV[m/s]',xaxt='n',yaxt=yaxt,pch=20,cex=0.5,col=colors[k],ylim=range(res.all),xlim=range(trv.all))
+                }else{
+                    points(trv,rv,col=colors[k],pch=20,cex=0.5)
+                }
+                arrows(trv,rv-erv,trv,rv+erv,length=0.03,angle=90,code=3,col=colors[k])
+            }
+        }
+    }else{
+        plot(t,y,ylab='RV[m/s]',xaxt='n',yaxt=yaxt,pch=20,cex=0.5,col=colors[k])
     }
 }
 #######periodograsm plot
 cols <- rainbow(length(y),start=rs)#
 ###show signals; e.g. the signals in the HARPS RVs for HD41248
-sigs <- c(13.4, 25.6)
+#sigs <- c(13.4, 25.6)
 ind.show <- which.min(sigs)
-for(j in 1:2){
+for(j in 1:Nwindow){
     if(j==1){
         par(mar = c(5.1, 5.1, 0, 0))
         image(xx,log10(yy),t(zz),xlab='',ylab='Orbital period [day]',axes=FALSE,col=cols,xlim=c(min(t),max(t)),zlim=zlim)
@@ -114,7 +134,8 @@ for(j in 1:2){
         flow <- 0.9
         fup <- 2
         for(k in ind.show){
-            inds <- which(yy>12 & yy<30)
+#            inds <- which(yy>12 & yy<30)
+            inds <- which(yy>max(1/fmax,0.8*min(sigs)) & yy<min(1/fmin,1.2*min(sigs)))
             image(xx,log10(yy[inds]),t(zz[inds,]),xlab='',ylab='Orbital period [day]',axes=FALSE,col=cols,xlim=c(min(t),max(t)),zlim=zlim)
             axis(side=1)
             ticks <- seq(log10(flow*sigs[k]),log10(fup*sigs[k]),length.out=5)
