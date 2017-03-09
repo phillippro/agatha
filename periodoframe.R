@@ -1075,14 +1075,16 @@ combine.data <- function(data,Ninds,Nmas){
         t <- tab[,1]-min(tab[,1])
         y <- tab[,2]
         dy <- tab[,3]
-        if(ncol(tab)>3){
+        if(ncol(tab)>4){
             Indices <- as.matrix(tab[,4:ncol(tab)])
+        }else if(ncol(tab)==4){
+            Indices <- matrix(tab[,4],ncol=1)
         }else{
             Indices <- NA
         }
         if(all(Inds==0)){
             NI <- 0
-#            Indices <- NA
+            Indices <- NA
         }else{
             NI <- length(Inds)
             if(NI>0){

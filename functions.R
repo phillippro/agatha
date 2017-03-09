@@ -255,6 +255,7 @@ per2D.data <- function(vars,per.par,data){
         Nma <- as.integer(pars[[i]]$Nma)
         Inds <- as.integer(pars[[i]]$Inds)
     }
+    Indices <- NA
     per.type <- pars[[i]]$per.type
     if(length(per.target)>1){
         instrument <- 'combined'
@@ -266,19 +267,18 @@ per2D.data <- function(vars,per.par,data){
     }else{
         instrument <- per.target
         tab <- data[[per.target]]
+        if(ncol(tab)>3 & !all(unlist(Inds)==0)){
+            Indices <- as.matrix(tab[,4:ncol(tab)])
+            if(!is.matrix(Indices) & !is.data.frame(Indices)){
+                Indices <- matrix(Indices,ncol=1)
+            }
+            Indices <- as.matrix(Indices)
+            for(j in 1:ncol(Indices)){
+                Indices[,j] <- as.numeric(scale(Indices[,j]))
+            }
+        }
     }
     ypar <- var
-    Indices <- NA
-    if(ncol(tab)>3 & !all(Inds==0)){
-        Indices <- as.matrix(tab[,4:ncol(tab)])
-        if(!is.matrix(Indices) & !is.data.frame(Indices)){
-            Indices <- matrix(Indices,ncol=1)
-        }
-        Indices <- as.matrix(Indices)
-        for(j in 1:ncol(Indices)){
-            Indices[,j] <- as.numeric(scale(Indices[,j]))
-        }
-    }
     t <- tab[,1]%%2400000#min(tab[,1])
     y <- tab[,2]
     dy <- tab[,3]

@@ -7,6 +7,7 @@ library(magicaxis)
 source('periodoframe.R')
 source("periodograms.R")
 source('functions.R',local=TRUE)
+options(shiny.maxRequestSize=30*1024^2) 
 Nmax.plots <- 50
 count0 <- 0
 instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK','APF','PFS')
@@ -539,7 +540,12 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
           Nmas <- c()
           Inds <- list()
           for(i in 1:Ntarget2()){
-              Inds <- c(Inds,as.integer(input[[paste0('Inds2.',i)]]))
+              inds <- as.integer(input[[paste0('Inds2.',i)]])
+              if(all(inds==0)){
+                  Inds <- c(Inds,list(inds))
+              }else{
+                  Inds <- c(Inds,list(inds[inds!=0]))
+              }
               Nmas <- c(Nmas,as.integer(input[[paste0('Nma2.',i)]]))
           }
           vals <- c(vals,Nmas=list(Nmas),Inds=list(Inds))

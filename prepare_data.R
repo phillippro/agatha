@@ -3,19 +3,21 @@ library(shiny)
 #####PartI: set parameters
 ############################################
 #star <- 'ChallengeDataSet2'
-star <- 'ChallengeDataSet2'
+star <- 'HD128621'
 #star <- 'GJ699'
 #star <- 'HD172555'
 np <- 0
-NI <- 3
-Nma <- 0
+NI <- 5
+Nma <- 2
 Np <- 0
+cummulative <- TRUE
+Ncum <- 5
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
 #model.type <- 'auto'#manually setting the number of MA components and differential RVs
 model.type <- 'man'#automatically determine the optimal noise model
 tol <- 1e-16#numerical fitting precision tolerance
 Nap <- 1#number of aperture
-Nc <- 0#1
+Nc <- 1#1
 per.types <- c('BFP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
 per.type.seq <- per.types[1]
@@ -50,10 +52,20 @@ if(loading){
     tab <- cbind(e$trv,e$res,e$eRV)
     Np <- e$Np
 }else{
-    file <- paste0('data/',star,'_HARPS.dat')
+    file <- paste0('../data/aperture/',star,'/',star,'_HARPS.dat')
     tab <- read.table(file,header=TRUE,check.names=FALSE)
+    Nproxy <- (ncol(tab)-3)/2
+    tab <- cbind(tab[,1:3],tab[,2+(1:Nproxy)*2])
+    if(cummulative){
+        r <- c()
+        for(j in 1:Nproxy){
+            r <- c(r,abs(cor(tab[,2],tab[,3+j])))
+        }
+        ind <- sort(r,decreasing=TRUE,index.return=TRUE)$ix
+        tab <- cbind(tab[,1:3],tab[,3+ind])
+    }
 }
-NI0 <- NI <- ncol(tab)-3
+#NI0 <- NI <- ncol(tab)-3
 ############################################
 #####PartIII: prepare data
 ############################################
