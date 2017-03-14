@@ -1096,7 +1096,6 @@ combine.data <- function(data,Ninds,Nmas){
             }
         }
         vars <- global.notation(t,y,dy,Indices,Nmas[j],NI)
-        if(is.numeric(Indices)) Indices <- matrix(Indices,ncol=1)
         tmp <- par.optimize(data=tab,Indices=Indices,NI=NI,Nma=Nmas[j],opt.type='sl',type='noise',pars=vars)
         val <- cbind(t0,tmp$res,dy)
         idata[[j]] <- val

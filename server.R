@@ -756,8 +756,6 @@ output$color <- renderUI({
   })
 
   per1D.data <- eventReactive(input$plot1D,{
-#      reactive({
-#function(){
           calc.1Dper(Nmax.plots, periodogram.var(),per.par(),data())
   })
 

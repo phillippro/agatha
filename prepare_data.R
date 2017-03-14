@@ -49,7 +49,8 @@ Nw <- 1
 if(loading){
 #file <- 'keppure_priormt_12eppar1_Ndata221_quantifyTRUE_1per1_Pmin1Pmax3689_Nw1ABTRUE_Nap0_modedata_HD41248_HARPS_TERRA_1AP1_ervab0ap_nosim_1planet_ARMAp0q1_0momc0_Nsamp2000000_tem1_acc2.3_pretem0.311P25.6d_negLmax506'
 #    file <- 'keppure_priormt_talklike_Ndata221_quantifyTRUE_1per1_Pmin0.5Pmax7378_Nw1ABTRUE_Nap0_modedata_HD41248_HARPS_TERRA_1AP1_ervab0ap_smallerrFALSE_3planet_ARMA01_0momc3.2_Nsamp10000000_tem1_acc0.12_pretem1P13.4d26.2d290.4d_negLmax474'
-    file <- 'keppure_priormt_talklike_Ndata805_quantifyTRUE_1per1_Pmin1Pmax21315_Nw6ABFALSE_Nap0_modedata_GJ699_TERRA_1AP1_ervab3ap_smallerrFALSE_2planet_ARMA02_0momc0_Nsamp8000000_tem1_acc7.1_pretem1P437d232.5d_negLmax1794'
+#    file <- 'keppure_priormt_talklike_Ndata805_quantifyTRUE_1per1_Pmin1Pmax21315_Nw6ABFALSE_Nap0_modedata_GJ699_TERRA_1AP1_ervab3ap_smallerrFALSE_2planet_ARMA02_0momc0_Nsamp8000000_tem1_acc7.1_pretem1P437d232.5d_negLmax1794'
+    file <- 'keppure_priormt_talkpost_Ndata805_quantifyTRUE_1per1_Pmin0.1Pmax21315_Nw6ABFALSE_Nap0_modedata_GJ699_TERRA_1AP1_ervab3ap_smallerrFALSE_1planet_ARMA02_0momc0_Nsamp4000000_tem1_acc9.4_pretem1P231.6d_negLmax1816'
     load(paste0('../output/',star,'/',file,'.Robj'),envir=e <- new.env())
     Nw <- e$Nw
     if(Nw>1){
