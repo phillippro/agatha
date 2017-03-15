@@ -157,7 +157,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     })
 
     output$text2D <- renderText({
-        "<font color=\"DarkSlateGray\"><b>To make 2D periodograms, the time series should contain at least 100 data points over a time span beyond 200 time units. Otherwise, there could be errors.</b></font>"
+        "<font color=\"DarkSlateGray\"><b>To make 2D periodograms, the time series should be properly sampled and each time window should contain at least a few data points, e.g. 100 data points over a time span beyond 200 time units. </b></font>"
     })
 
     output$Inds <- renderUI({
