@@ -170,6 +170,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     output$Inds2 <- renderUI({
         if(is.null(data()) | is.null(input$per.target2)) return()
         lapply(1:Ntarget2(),function(i){
+            cat('i=',i,'\n')
             selectInput(paste0("Inds2.",i),paste('Noise proxies for',input$per.target2[i]),choices = 0:NI.max()[input$per.target2[i]],selected = 0,multiple=TRUE)
         })
     })
@@ -373,6 +374,26 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     return(unique(nam))
   })
 
+###variable names dependent on per.target
+    ns.1D <- reactive({
+        if(is.null(input$per.target) & is.null(input$per.target2)) return()
+        nam <- c()
+        if(length(input$per.target)>0){
+            tar <- input$per.target
+        }
+        if(length(input$per.target2)>0){
+            tar <- input$per.target2
+        }
+        for(i in 1:length(input$per.target)){
+            names <- colnames(data()[[tar[i]]])
+            names <- names[-c(1,3)]#e.g. 'Time' and 'eRV' for RV data
+            names <- c(names,'Window Function')
+                                        #      nam <- c(nam,paste(names(data())[i],names,sep=':'))
+            nam <- c(nam,names)
+        }
+        return(unique(nam))
+    })
+
   ns.wt <- reactive({
       nam <- c()
       lab <- c()
@@ -471,13 +492,12 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
 
     output$var <- renderUI({
         if(is.null(input$per.type)) return()
-#        cat('ns()=',ns(),'\n')
         if(!any(grepl('MLP',input$per.type)) & !any(grepl('BFP',input$per.type))){
-            selectInput("yvar", "Choose observables", choices  = ns(),selected = ns()[1],multiple=TRUE)
+            selectInput("yvar", "Choose observables", choices  = ns.1D(),selected = ns.1D()[1],multiple=TRUE)
         }else{
             selectInput("yvar", "Choose observables",
-                        choices  = ns()[1],
-                        selected = ns()[1],multiple=FALSE)
+                        choices  = ns.1D()[1],
+                        selected = ns.1D()[1],multiple=FALSE)
         }
     })
 
