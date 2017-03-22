@@ -19,9 +19,9 @@ runApp()
 ```
 Then the app will appear in your browser for your usage.  
 
-### Details about periodoframe.R
+### Details about periodogram.R
 
-The functions used to calculate the BFP and MLP are put in the periodoframe.R file. The user can use/adapt these functions for different applications. 
+The functions used to calculate the BFP and MLP are put in the periodogram.R file. The user can use/adapt these functions for different applications. 
 For example, the BFP can be made using the following function:
 ```
 BFP(t,y,dy,Nma=Nma,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax,tol=tol)
