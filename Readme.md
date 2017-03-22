@@ -24,13 +24,13 @@ Then the app will appear in your browser for your usage.
 The functions used to calculate the BFP and MLP are put in the periodoframe.R file. The user can use/adapt these functions for different applications. 
 For example, the BFP can be made using the following function:
 ```
-BFP(t,y,dy,Nma=Nma,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax,tol=tol)
+BFP(t,y,dy,Nma=Nma,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax)
 ```
 where t, y and dy are the times, y values and the corresponding errors. Nma is the number of moving average components. Indices are a matrix of 
 noise proxies. Inds is a vector of column numbers of indices (or noise proxies) in the "Indices" matrix. 
 For example, "Inds=1:4" means linearly including the proxies from column 1 to column 4 of "Indices" in the noise model.
 "ofac" is the over sampling factor, and opt.type can be "nl" or "sl", and is the method used to optimize parameters.
-"sl" is suggested because it is more efficient and is as reliable as "nl". "model.type" is a parameter to specify whether to compare models. If model.type='auto', model comparison is done using the BFP to select the optimal noise model. If model.type='man', BFP will use Nma and Inds manually provided by the user. "fmax" is the maximum frequency for frequency sampling, and "tol" is the tolorence or prevision required to optimize parameters (or maximize the likelihood) numerically. 
+"sl" is suggested because it is more efficient and is as reliable as "nl". "model.type" is a parameter to specify whether to compare models. If model.type='auto', model comparison is done using the BFP to select the optimal noise model. If model.type='man', BFP will use Nma and Inds manually provided by the user. "fmax" is the maximum frequency for frequency sampling.
 
 The main output of the BFP function is the logarithmic Bayes factor (logBF) for a sample of periods (P). Then the user can make a simple BFP using 
 ```
