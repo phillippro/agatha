@@ -12,7 +12,6 @@ sig <- TRUE
 RML <- TRUE
 nshow <- 1
 fname <- paste0('periodograms_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'modeltype',model.type,'_',star,'_NI',NI,'Nma',Nma,'_Nc',Nc,'_ofac',ofac,'_opt',opt.type,'_Nap',Nap,'_res',Np.max,loading,'_trend',trend)
-if(!file.exists('results/')) system(paste0('mkdir results'))
 fname <- paste0('results/',fname)
 ######plot
 leg.pos <- 'topright'

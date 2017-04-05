@@ -265,6 +265,8 @@ cat('MLP computation time:',dur2,'s\n')
 Nma <- ml$Nma
 NI <- ml$NI
 fname <- paste0('periodograms_Ndata_',Ndata,'modeltype',model.type,'_',target,'_res',res.type,'_NI',NI,'Nma',Nma,'_Nc',Nc,'_ofac',ofac,'_opt',opt.type,'_MLP',MLP.type,'_Nap',Nap,'_paper2')
+if(!file.exists('results/')) system(paste0('mkdir results'))
+
 fname <- paste0('results/',fname)
 
 ###save data
