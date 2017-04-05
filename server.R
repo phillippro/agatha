@@ -12,9 +12,10 @@ Nmax.plots <- 50
 count0 <- 0
 instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK','APF','PFS')
 tol <- 1e-20
+#trend <- FALSE
 data.files <- list.files(path='data',full.name=FALSE)
 
-shinyServer(function(input, output, session) {
+shinyServer(function(input, output, session){
 ####select from list
     output$about <- renderUI({HTML(paste("
 <html>
@@ -162,6 +163,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
 
     output$Inds <- renderUI({
         if(is.null(input$per.type) | is.null(data()) | is.null(Ntarget())) return()
+#        if(all(NI.max()==0)) return()
         lapply(1:Ntarget(),function(i){
             selectInput(paste0('Inds',i),paste('Noise proxies for',input$per.target[i]),choices = 0:NI.max()[input$per.target[i]],selected = 0,multiple=TRUE)
         })

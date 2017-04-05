@@ -2,6 +2,7 @@ library(minpack.lm)
 source('periodograms.R')
 #library(lomb)
 tol <- 1e-16
+#trend <- FALSE
 RV.model <- function(par,data){
 ####
     t <- data$data[,1]
@@ -766,6 +767,12 @@ global.notation <- function(t,y,dy,Indices,Nma,NI){
     beta.min <- -(max(y)-min(y))/(max(t)-min(t))
     beta.max <- (max(y)-min(y))/(max(t)-min(t))
     beta.ini <- (beta.min+beta.max)/2
+    trend <- TRUE
+    if(!trend){
+        beta.min <- -1e-6
+        beta.max <- 1e-6
+        beta.ini <- 0
+    }
     sj.min <- 0
     sj.max <- 2*sd(y)
     sj.ini <- (sj.min+sj.max)/2

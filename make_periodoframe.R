@@ -5,18 +5,13 @@ source('periodograms.R')#for other periodograms
 ############################################
 #####PartIV: make PeriodoFrame
 ############################################
-if(NI>0){
-    Inds <- 1:NI
-}else{
-    Inds <- 0
-}
 lab <- FALSE
-                                        #inds <- 1:2
+#inds <- 3
 inds <- NULL
 sig <- TRUE
 RML <- TRUE
 nshow <- 1
-fname <- paste0('periodograms_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'modeltype',model.type,'_',star,'_NI',NI,'Nma',Nma,'_Nc',Nc,'_ofac',ofac,'_opt',opt.type,'_Nap',Nap,'_res',Np.max,loading)
+fname <- paste0('periodograms_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'modeltype',model.type,'_',star,'_NI',NI,'Nma',Nma,'_Nc',Nc,'_ofac',ofac,'_opt',opt.type,'_Nap',Nap,'_res',Np.max,loading,'_trend',trend)
 fname <- paste0('results/',fname)
 ######plot
 leg.pos <- 'topright'
@@ -73,7 +68,7 @@ for(kk in 1:length(per.types)){
         if(per.type=='GLS'){
             per <- gls(tab[,1],rr,tab[,3],ofac=ofac,fmax=fmax)
             ylim <- range(median(per$power),max(per$power)+0.1*(max(per$power)-min(per$power)),per$sig.level)
-                                        #            ylim <- c(min(median(per$power),0),1.1*max(per$power))
+#            ylim <- c(min(median(per$power),0),1.1*max(per$power))
             ylab <- 'Power'
         }
         if(per.type=='BGLS'){

@@ -329,9 +329,6 @@ lsp <- function (x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, 
     }
     freq = seq(fmin,fmax,by=step)
     n.out <- length(freq)
-    if (!is.null(from)) 
-        freq <- freq[freq >= from]
-    n.out <- length(freq)
     if (n.out == 0) 
         stop("erroneous frequency range specified ")
     x <- t * 2 * pi

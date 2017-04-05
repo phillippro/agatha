@@ -35,7 +35,7 @@ for(jj in 2:Nsig.max){
         name <- ylab <- 'Power'
     }
     if(per.type.seq=='LS'){
-        rv.ls <- lsp(times=tab[,1]-min(tab[,1]),x=rr,ofac=ofac,from=NULL,to=fmax,alpha=c(0.1,0.01,0.001))
+        rv.ls <- lsp(times=tab[,1]-min(tab[,1]),x=rr,ofac=ofac,from=NULL,to=frange[2],alpha=c(0.1,0.01,0.001))
         name <- ylab <- 'Power'
     }
     ylim <- c(min(rv.ls$power),max(rv.ls$power)+0.15*(max(rv.ls$power)-min(rv.ls$power)))
@@ -51,6 +51,8 @@ for(jj in 2:Nsig.max){
     }else{
         yy <- rv.ls$power
     }
+        cat('dim(per.data)=',dim(per.data),'\n')
+        cat('length(yy)=',length(yy),'\n')
     per.data <- cbind(per.data,yy)
 #    tit <- paste('Periodogram: BGLS; Target:',instrument,'; Observable',ypar)
     tit <- paste0(per.type.seq,';',instrument,';',ypar,';',jj,' signal')
