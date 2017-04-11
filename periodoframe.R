@@ -1,7 +1,7 @@
 library(minpack.lm)
 source('periodograms.R')
 #library(lomb)
-tol <- 1e-16
+tol <- 1e-20
 #trend <- FALSE
 RV.model <- function(par,data){
 ####
@@ -117,8 +117,6 @@ nlopt <- function(pars,type='noise'){
         par.low <- c(par.low,logtau=logtau.min)
         par.up <- c(par.up,logtau=logtau.max)
     }
-#    cat('names(start)=',names(start),'\n')
-#    cat('start=',unlist(start),'\n')
     names(par.up) <- names(par.low) <- names(start)
 ###########
     out <- nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.res,data=df,control=nls.lm.control(maxiter=500))#ftol=1e-8
@@ -349,7 +347,7 @@ rv.white <- function(par,df){
                 lin.mat <- rbind(lin.mat,c(I[j],TI[j],II[j,]))
             }
             vec.rh <- c(Y,YT,YI)
-            white.par <- solve(lin.mat,vec.rh,tol=df$tol)#gamma,beta,dj
+            white.par <- solve(lin.mat,vec.rh,tol=tol)#gamma,beta,dj
             indd <- (length(white.par)-NI+1):length(white.par)
         }else{
             dI <- 0
@@ -519,7 +517,6 @@ sopt <- function(pars,type='noise'){
         names(start) <- names(start0)
     }
     out <- nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500))
-
 
 #####retrieve parameters
     opt.par <- as.list(coef(out))
@@ -912,8 +909,6 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     data[,2] <- y0
     tmp <- par.optimize(data,Indices=Indices,NI=NI,Nma=Nma,opt.type='sl',type='period',pars=var.new)
     opt.par <- tmp$par
-#    cat('names(opt.par)=',names(opt.par),'\n')
-#    cat('opt.par=',unlist(opt.par),'\n')
     inds <- sort(logBF,decreasing=TRUE,index.return=TRUE)$ix
     ps <- P[inds[1:5]]
     power.opt <- logBF[inds[1:5]]

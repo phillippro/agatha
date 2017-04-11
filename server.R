@@ -276,6 +276,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                     tab <- tab[-ind,]
                 }
                 df[[i]] <- tab
+                cat('ins=',ins,'\n')
                 if(is.null(tab)){
                     if(ncol(df[[i]])==6 & ins[i]=='HARPS'){
                         colnames(df[[i]])=c('Time','RV','eRV','BIS','FWHM','S-index')#harps

@@ -51,8 +51,6 @@ for(jj in 2:Nsig.max){
     }else{
         yy <- rv.ls$power
     }
-        cat('dim(per.data)=',dim(per.data),'\n')
-        cat('length(yy)=',length(yy),'\n')
     per.data <- cbind(per.data,yy)
 #    tit <- paste('Periodogram: BGLS; Target:',instrument,'; Observable',ypar)
     tit <- paste0(per.type.seq,';',instrument,';',ypar,';',jj,' signal')
