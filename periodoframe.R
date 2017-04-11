@@ -1,7 +1,7 @@
 library(minpack.lm)
 source('periodograms.R')
 #library(lomb)
-tol <- 1e-20
+tol <- 1e-16
 #trend <- FALSE
 RV.model <- function(par,data){
 ####
@@ -271,7 +271,8 @@ rv.red <- function(par,df){
             vec.rh <- c(YCp,YSp,YWp,YTp)
         }
     }
-    white.par <- try(solve(lin.mat,vec.rh,tol=tol))#gamma,beta,dj
+    white.par <- try(solve(lin.mat,vec.rh,tol=tol),TRUE)#gamma,beta,dj
+    if(class(white.par)=='error')     white.par <- solve(lin.mat,vec.rh,tol=1e-20)
     ind0 <- length(white.par)-NI-1
     r <- white.par[ind0]+white.par[ind0+1]*t
     if(NI>0){
@@ -347,14 +348,16 @@ rv.white <- function(par,df){
                 lin.mat <- rbind(lin.mat,c(I[j],TI[j],II[j,]))
             }
             vec.rh <- c(Y,YT,YI)
-            white.par <- solve(lin.mat,vec.rh,tol=tol)#gamma,beta,dj
+            white.par <- try(solve(lin.mat,vec.rh,tol=tol),TRUE)#gamma,beta,dj
+            if(class(white.par)=='error')     white.par <- solve(lin.mat,vec.rh,tol=1e-20)
             indd <- (length(white.par)-NI+1):length(white.par)
         }else{
             dI <- 0
             d <- 0
             lin.mat <- matrix(c(1,T,T,TT),byrow=TRUE,ncol=2)
             vec.rh <- c(Y,YT)
-            white.par <- solve(lin.mat,vec.rh,tol=tol)
+            white.par <- try(solve(lin.mat,vec.rh,tol=tol),TRUE)
+            if(class(white.par)=='error')     white.par <- solve(lin.mat,vec.rh,tol=1e-20)
         }
 ###optimized parameterse for the trend model
     }else if(type=='period'){
@@ -388,7 +391,8 @@ rv.white <- function(par,df){
                 }
             }
             vec.rh <- c(YC,YS,Y,YT,YI)
-            white.par <- solve(lin.mat,vec.rh,tol=tol)#gamma,beta,dj
+            white.par <- try(solve(lin.mat,vec.rh,tol=tol),TRUE)#gamma,beta,dj
+            if(class(white.par)=='error')     white.par <- solve(lin.mat,vec.rh,tol=1e-20)
             indd <- (length(white.par)-NI+1):length(white.par)
         }else{
             lin.mat <- rbind(lin.mat,c(CC,CS,C,CT))
@@ -396,7 +400,8 @@ rv.white <- function(par,df){
             lin.mat <- rbind(lin.mat,c(C,S,W,T))
             lin.mat <- rbind(lin.mat,c(CT,ST,T,TT))
             vec.rh <- c(YC,YS,Y,YT)
-            white.par <- solve(lin.mat,vec.rh,tol=tol)#gamma,beta,dj
+            white.par <- try(solve(lin.mat,vec.rh,tol=tol),TRUE)#gamma,beta,dj
+            if(class(white.par)=='error')     white.par <- solve(lin.mat,vec.rh,tol=1e-20)
         }
     }
     ind0 <- length(white.par)-NI-1
