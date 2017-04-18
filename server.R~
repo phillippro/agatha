@@ -11,7 +11,7 @@ options(shiny.maxRequestSize=30*1024^2)
 Nmax.plots <- 50
 count0 <- 0
 instruments <- c('HARPS','SOHPIE','HARPN','AAT','KECK','APF','PFS')
-tol <- 1e-16
+tol <- 1e-20
 #trend <- FALSE
 data.files <- list.files(path='data',full.name=FALSE)
 

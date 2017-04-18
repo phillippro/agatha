@@ -1020,6 +1020,8 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
             cat('log(BF) for Indices=',Inds,'and','Nma=',nma,'is',format(logBFs[j,i],digit=3),'\n\n')
             penI <- log(150)
             penMA <- log(150)
+	    cat('logBFs[j,i]=',logBFs[j,i],'\n')
+	    cat('lbm=',lbm,'\n')
             if(j>1 & i==1){
                 if(logBFs[j,i]>(max(logBFs[1:(j-1),1])+penI) & logBFs[j,i]>lbm){
                     Inds.opt <- sort(Inds)
