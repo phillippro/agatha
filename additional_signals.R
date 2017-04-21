@@ -52,9 +52,12 @@ for(jj in 2:Nsig.max){
         yy <- rv.ls$power
     }
     per.data <- cbind(per.data,yy)
+    Pmaxs <- c(Pmaxs,format(per.data[which.max(yy),1],digit=1))
 #    tit <- paste('Periodogram: BGLS; Target:',instrument,'; Observable',ypar)
     tit <- paste0(per.type.seq,';',instrument,';',ypar,';',jj,' signal')
+    f <-  paste0(paste(per.target,collapse='_'),'_',gsub(' ','',ypar),'_',per.type,'_MA',Nma,'proxy',paste(Inds,collapse='.'),'_1sig_',format(rv.ls$P[which.max(rv.ls$power)],digit=1),'d')
     tits <- c(tits,tit)
+    fs <- c(fs,f)
     if(length(rv.ls$sig.level)<3){
         sig.levels <- cbind(sig.levels,c(rv.ls$sig.level,rep(NA,3-length(rv.ls$sig.level))))
     }else{

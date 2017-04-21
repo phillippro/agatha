@@ -143,7 +143,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                         choices=c('MLP'),selected="MLP",multiple=TRUE)
         }else{
             selectInput("per.type",'Periodogram type',
-                        choices=c('BFP','MLP','GLST','BGLS','GLS','LS'),selected="MLP",multiple=TRUE)
+                        choices=c('BFP','MLP','GLST','BGLS','GLS','LS'),selected="BFP",multiple=TRUE)
         }
     })
 
@@ -164,6 +164,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     output$Inds <- renderUI({
         if(is.null(input$per.type) | is.null(data()) | is.null(Ntarget())) return()
 #        if(all(NI.max()==0)) return()
+        if(input$per.type!='BFP' & input$per.type!='MLP') return()
         lapply(1:Ntarget(),function(i){
             selectInput(paste0('Inds',i),paste('Noise proxies for',input$per.target[i]),choices = 0:NI.max()[input$per.target[i]],selected = 0,multiple=TRUE)
         })
@@ -784,9 +785,10 @@ output$color <- renderUI({
 
     output$per1D.data <- downloadHandler(
         filename = function() {
-            f1 <- gsub(" ",'_',Sys.time())
-            f2 <- gsub(":",'-',f1)
-            paste('periodogram1D_', f2, '.txt', sep='')
+            paste0(per1D.data()$fname,'.txt')
+#            f1 <- gsub(" ",'_',Sys.time())
+#            f2 <- gsub(":",'-',f1)
+#            paste('periodogram1D_', f2, '.txt', sep='')
         },
         content = function(file) {
             tab <- per1D.data()$per.data
@@ -801,9 +803,10 @@ output$color <- renderUI({
 
     output$per1D.figure <- downloadHandler(
         filename = function() {
-            f1 <- gsub(" ",'_',Sys.time())
-            f2 <- gsub(":",'-',f1)
-            paste('periodogram1D_', f2, '.pdf', sep='')
+            paste0(per1D.data()$fname,'.pdf')
+ #           f1 <- gsub(" ",'_',Sys.time())
+ #           f2 <- gsub(":",'-',f1)
+ #           paste('periodogram1D_', f2, '.pdf', sep='')
         },
       content = function(file) {
         pdf(file,8,8)
@@ -821,9 +824,11 @@ output$color <- renderUI({
 
     output$per1D.single <- downloadHandler(
         filename = function() {
-            f1 <- gsub(" ",'_',Sys.time())
-            f2 <- gsub(":",'-',f1)
-            paste('periodogram1D_individual_', f2, '.pdf', sep='')
+#            f1 <- gsub(" ",'_',Sys.time())
+#            f2 <- gsub(":",'-',f1)
+#            paste('periodogram1D_individual_', f2, '.pdf', sep='')
+            ind <- which(input$per1D.name==per1D.data()$tits)
+            paste0(per1D.data()$fs[ind],'.pdf')
         },
       content = function(file) {
         pdf(file,4,4)

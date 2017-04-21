@@ -34,6 +34,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
     Nmas <- unlist(Nmas)
     per.data <- c()
     tits <- c()
+    fs <- c()
     pars <- list()
     kk <- 1
     MLP.type <- 'sub'
@@ -53,6 +54,8 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
     cnames <- c()
     pers <- c()
     ylabs <- c()
+    Pmaxs <- c()
+    ypars <- c()
 #    lapply(1:Nvar, function(i){
     for(i in 1:Nvar){
         var <- pars[[i]]$var
@@ -74,6 +77,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             tab <- data[[per.target]]
         }
         ypar <- var
+        ypars <- c(ypars,gsub(' ','',ypar))
         Indices <- NA
         if(ncol(tab)>3 & !all(unlist(Inds)==0)){
             Indices <- as.matrix(tab[,4:ncol(tab)])
@@ -134,15 +138,30 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             }
 #            tit <- paste('Periodogram:',per.type,'; Target:',instrument,'; Observable',ypar)
             tit <- paste0(per.type,'; ',instrument,';', ypar,';1 signal')
+            if(!exists('Nma')){
+                Nma <- 0
+            }
+            if(!exists('Inds')){
+                Inds <- 0
+            }
+            f <-  paste0(paste(per.target,collapse='_'),'_',gsub(' ','',ypar),'_',per.type,'_MA',Nma,'proxy',paste(Inds,collapse='.'),'_1sig_',format(rv.ls$P[which.max(rv.ls$power)],digit=2),'d')
         }else{
-            y <- rep(1,nrow(tab))
-            rv.ls <- bgls(t=tab[,1]-min(tab[,1]),y=rep(2,nrow(tab)),err=rep(0.2,nrow(tab)), ofac=ofac,fmin=frange[1],fmax=frange[2])
-            tit <- paste0('BGLS;',instrument,';',ypar,'; 1 signal')
-            ylab <- expression('log(ML/'*ML[max]*')')
-            name <- 'logML'
+            rv.ls <- lsp(times=tab[,1]-min(tab[,1]),x=rep(1,nrow(tab)),ofac=ofac,from=frange[1],to=frange[2],alpha=c(0.1,0.01,0.001))
+            tit <- paste0('LS;',instrument,';',ypar)
+            pt <- 'LS'
+            if(!exists('Nma')){
+                Nma <- 0
+            }
+            if(!exists('Inds')){
+                Inds <- 0
+            }
+            f <-  paste0(paste(per.target,collapse='_'),'_',gsub(' ','',ypar),'_',pt,'_MA',Nma,'proxy',paste(Inds,collapse='.'),'_1sig_',format(rv.ls$P[which.max(rv.ls$power)],digit=2),'d')            
+                ylab <- 'Power'
+                name <- 'power'
         }
         ylabs <- c(ylabs,ylab)
         tits <- c(tits,tit)
+        fs <- c(fs,f)
         pers <- c(pers,per.type)
 ###plot
 #        plotname <- paste("plot", i, sep="")
@@ -168,6 +187,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         }
         if(i==1) per.data <- cbind(per.data,rv.ls$P)
         per.data <- cbind(per.data,yy)
+        Pmaxs <- c(Pmaxs,format(per.data[which.max(yy),1],digit=2))
         inds <- (ncol(per.data)-1):ncol(per.data)
         if(i==1)  cnames <- c(cnames,'P')
         cnames <- c(cnames,paste0(pers[i],'1signal:',gsub(' .+','',ypar),':',name))
@@ -182,7 +202,17 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         }
     }
     colnames(per.data) <- cnames
-    return(list(per.data=per.data,tits=tits,pers=pers,levels=sig.levels,ylabs=ylabs))
+    if(!exists('Nsig.max')){
+        Nsig.max <- 1
+    }
+    if(!exists('Nma')){
+        Nma <- 0
+    }
+    if(!exists('Inds')){
+        Inds <- 0
+    }
+    fname <- paste0(paste(per.target,collapse='_'),'_',paste(ypars,collapse='.'),'_',paste(per.type,collapse=''),'_MA',Nma,'proxy',paste(Inds,collapse='.'),'_',Nsig.max,'sig_',paste(Pmaxs,collapse='d'),'d')
+    return(list(per.data=per.data,tits=tits,pers=pers,levels=sig.levels,ylabs=ylabs,fname=fname,fs=fs))
 }
 
 per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL){
@@ -207,10 +237,17 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
         f1 <- gsub('signal:.+','',colnames(per.data)[i+1])
         Nsig <- gsub('[A-Z]','',f1)
         ymin <- median(power)
-        ylim <- c(ymin,max(power)+0.15*(max(power)-ymin))
+#        cat('levels[,i]=',levels[,i],'\n')
+        if(grepl('Window',titles[i])){
+            ylim <- c(ymin,max(power)+0.15*(max(power)-ymin))
+        }else{
+            ylim <- c(ymin,max(max(power)+0.15*(max(power)-ymin),levels[which(!is.na(levels[,i])),i]))
+        }
         plot(P,power,xlab='Period [day]',ylab=ylab,xaxt='n',log='x',type='l',main=titles[i], ylim=ylim)
         magaxis(side=1)
-        abline(h=levels[,i],lty=2)
+        if(!grepl('Window',titles[i])){
+            abline(h=levels[,i],lty=2)
+        }
         p <- show.peaks(ps=P,powers=power,levels=levels[,i])
         if(!is.matrix(p)){
             pmaxs <- p[1]

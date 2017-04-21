@@ -332,8 +332,14 @@ lsp <- function (x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, 
     if (n.out == 0) 
         stop("erroneous frequency range specified ")
     x <- t * 2 * pi
-    y <- y - mean(y)
-    norm <- 1/(2 * var(y))
+    if(sd(y)!=0){
+        y <- y - mean(y)
+    }
+    if(var(y)==0){
+        norm <- 1/2
+    }else{
+        norm <- 1/(2 * var(y))
+    }
     w <- 2 * pi * freq
     PN <- rep(0, n.out)
     for (i in 1:n.out){
@@ -350,7 +356,7 @@ lsp <- function (x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, 
     }
     PN <- norm * PN
     PN.max <- max(PN)
-    peak.freq <- freq[PN == PN.max]
+    peak.freq <- freq[PN == PN.max][1]
     peak.at <- c(peak.freq, 1/peak.freq)
     effm <- 2 * n.out/ofac
     level <- -log(1 - (1 - alpha)^(1/effm))
@@ -442,12 +448,5 @@ glst.res <- function(par,df){
     beta <- par$beta
     phi <- df$par.fix$phi
     omega <- df$par.fix$omega
-    cat('length(y)=',length(y),'\n')
-    cat('A=',A,'\n')
-    cat('length(t)=',length(t),'\n')
-    cat('omega=',omega,'\n')
-    cat('phi=',phi,'\n')
-    cat('B=',B,'\n')
-    cat('length(dy)=',length(dy),'\n')
     (y-(A*cos(omega*t-phi)+B*sin(omega*t-phi))+gamma+beta*t)/abs(dy)
 }
