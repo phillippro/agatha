@@ -62,6 +62,7 @@ sigs <- yy[inds]
 powers <- power1D[inds]
 tmp <- show.peaks(ps=sigs,powers=powers,levels=median(powers))
 sigs <- tmp[,1]
+#sigs <- c(0.85,3.7,8.9)##define sigs manually
 ind.show <- which.min(sigs)
 #cat('range(zz)=',range(zz),'\n')
 #cat('length(xx)=',length(xx),'\n')
@@ -72,10 +73,12 @@ for(j in 1:2){
         par(mar = c(1, s, 0, 0))
         image(xx,log10(yy),t(zz),xlab='',ylab='Period [day]',axes=FALSE,col=cols,xlim=xlim,zlim=zlim)
         at.labels <- axis(side=1,xpd=TRUE)
-        magaxis(side=2,labels=FALSE,unlog=TRUE,tcl=-0.5)
-        Ntick <- round(log10(max(yy))-log(min(yy)))
-        ticks <- ceiling(log10(min(yy)))+(0:Ntick)*round(log10(max(yy))-log(min(yy)))/Ntick
-        axis(side=2,at=ticks,labels=10^ticks)
+        magaxis(side=2,unlog=TRUE,tcl=-0.5)
+#        Ntick <- round(log10(max(yy))-log(min(yy)))
+#        ticks <- ceiling(log10(min(yy)))+(0:Ntick)*round(log10(max(yy))-log(min(yy)))/Ntick
+#        p <- try(axis(side=2,at=ticks,labels=10^ticks),TRUE)
+#        magaxis(side=2,unlog=TRUE)
+#        if(class(p)=='try-error') 
         mtext(text='Time [JD-2400000]',side=1,outer=TRUE,line=2.2,cex=0.9*size)
 #        mtext(at=c(min(t)-(max(t)-min(t))/10,0.5*(log10(max(yy))-log10(min(yy)))),text='Period [day]',side=2,outer=TRUE,line=2.2,cex=0.9*size)
     }else{
@@ -131,4 +134,4 @@ for(j in 1:2){
 ###make pretty axes
     axis(side=3,labels=FALSE)
 }
-image.plot(t(zz),col=cols,legend.only=TRUE,zlim = zlim,legend.mar=12.1,xpd=NA)
+image.plot(t(zz),col=cols,legend.only=TRUE,zlim = zlim,legend.mar=9,xpd=NA)

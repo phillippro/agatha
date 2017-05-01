@@ -1118,7 +1118,7 @@ combine.data <- function(data,Ninds,Nmas){
 }
 
 ####Bayes factor periodogram
-BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',progress=TRUE,quantify=FALSE){
+BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',progress=TRUE,quantify=FALSE,dP=0.1){
   #  unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
     unit <- 1
     if(all(Inds==0)){
@@ -1251,26 +1251,24 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
             }
         })
     }else{
-        for(kk in 1:length(f)){
+         for(kk in 1:length(f)){
 #####for periodogram, set sj=0
-                                        #        break()
-            omega <- omegas[kk]
-            tmp <- local.notation(t,y,dy,Indices,NI,omega,phi)
-            var.new <- c(vars,tmp)
-            var <- names(tmp)
-            for(k in 1:length(var)){
-                assign(var[k],tmp[[var[k]]])
-            }
+                omega <- omegas[kk]
+                tmp <- local.notation(t,y,dy,Indices,NI,omega,phi)
+                var.new <- c(vars,tmp)
+                var <- names(tmp)
+                for(k in 1:length(var)){
+                    assign(var[k],tmp[[var[k]]])
+                }
 ################################################
 ####I optimization
 ####################################################
-            opt <- par.optimize(data,Indices,NI,Nma,opt.type=opt.type,type='period',omega=omega,pars=var.new)
-            logLmax[kk] <- opt$logLmax
-            chi2 <- opt$chi2
-            opt.pars[kk,] <- unlist(opt$par)
-#####power
-            p[kk] <- (chi2.ref-chi2)/chi2.ref
-        }
+                opt <- par.optimize(data,Indices,NI,Nma,opt.type=opt.type,type='period',omega=omega,pars=var.new)
+                logLmax[kk] <- opt$logLmax
+                chi2 <- opt$chi2
+                opt.pars[kk,] <- unlist(opt$par)
+                p[kk] <- (chi2.ref-chi2)/chi2.ref
+            }
     }
 ####signals
         Pmax <- P[which.max(logLmax)]
@@ -1279,8 +1277,8 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
         logLmax1 <- logLmax
         opt.pars1 <- opt.pars
         ind.max <- which.max(logLmax)
-        fmin <- 0.9*f[ind.max]
-        fmax <- 1.1*f[ind.max]
+        fmin <- (1-dP)*f[ind.max]
+        fmax <- (1+dP)*f[ind.max]
 ###oversampling
         f <- seq(fmin,fmax,by=step/20)*unit
 #        f <- seq(fmin,fmax,length.out=1000)*unit
@@ -1320,6 +1318,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     }
 ####calculate the residual
     par.fix <- list(omega=2*pi/Popt[1],phi=0)
+#    par.fix <- list(omega=2*pi/131,phi=0)
     df <- list(data=cbind(t,y,dy),Indices=Indices,par.fix=par.fix,Nma=Nma,NI=NI)
     if(is.matrix(opt.par) | is.data.frame(opt.par)){
         pp <- as.list(opt.par[1,])
@@ -1396,7 +1395,7 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
 }
 
 ####MP without progress
-MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,per.type='MLP',...){
+MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,per.type='MLP',...){
     n <- nbin-1
     dt <- (max(t)-min(t)-Dt)/n
     tstart <- min(t)+(0:n)*dt
@@ -1412,6 +1411,10 @@ MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indice
                 index <- Indices
             }else{
                 index <- Indices[inds,]
+            }
+
+            if(is.null(dim(index))){
+                index <- matrix(index,ncol=1)
             }
             if(per.type=='BGLS'){
                 tmp <- bgls(t=t[inds],y=y[inds],err=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt)
@@ -1442,4 +1445,43 @@ MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indice
             ndata[j+1] <- length(inds)
         }
     return(list(tmid=tmid,P=tmp$P[index],powers=powers,rel.powers=rel.powers,ndata=ndata))
+}
+show.peaks <- function(ps,powers,levels=NULL,Nmax=5){
+    if(is.null(levels)) levels <- max(max(powers)-log(150),median(powers))
+    ind <- which(powers==max(powers) | (powers>(max(powers)-log(100)) & powers>max(levels)))
+    if(max(powers)-min(powers)<5) ind <- which.max(powers)
+    pmax <- ps[ind]
+    ppmax <- powers[ind]
+    j0 <- 1
+    p0 <- pmax[1]
+    pp0 <- ppmax[1]
+    pms <- p0
+    pos <- pp0
+    if(length(pmax)>1){
+        for(j in 2:length(pmax)){
+            if(abs(pmax[j]-p0) < 0.1*p0){
+                if(ppmax[j]>pp0){
+                    j0 <- j
+                    p0 <- pmax[j]
+                    pp0 <- ppmax[j0]
+                    pms[length(pms)] <- p0
+                    pos[length(pos)] <- pp0
+                }
+			    }else{
+                j0 <- j
+                p0 <- pmax[j]
+                pp0 <- ppmax[j0]
+                pms <- c(pms,p0)
+                pos <- c(pos,pp0)
+            }
+        }
+    }else{
+        pms <- pmax
+        pos <- ppmax
+    }
+    if(length(pms)>Nmax){
+      pms <- pms[1:Nmax]
+      pos <- pos[1:Nmax]
+    }
+    return(cbind(pms,pos))
 }

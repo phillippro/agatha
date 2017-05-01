@@ -121,7 +121,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 rv.ls <- BFP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,
                              Nma=Nma,Inds=Inds,model.type='man',Indices=Indices,
                              ofac=ofac,fmin=frange[1],fmax=frange[2],quantify=quantify)
-                ylab <- 'log(BF)'
+                ylab <- 'ln(BF)'
                 name <- 'logBF'
             }else if(per.type=='MLP'){
                 if(length(per.target)>1){
@@ -244,7 +244,7 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
             ylim <- c(ymin,max(max(power)+0.15*(max(power)-ymin),levels[which(!is.na(levels[,i])),i]))
         }
         plot(P,power,xlab='Period [day]',ylab=ylab,xaxt='n',log='x',type='l',main=titles[i], ylim=ylim)
-        magaxis(side=1)
+        magaxis(side=1,tcl=-0.5)
         if(!grepl('Window',titles[i])){
             abline(h=levels[,i],lty=2)
         }
@@ -332,10 +332,11 @@ per2D.data <- function(vars,per.par,data){
     y2 <- mp$P
     z2 <- mp$powers
     z2.rel <- mp$rel.powers
+    fname <- paste0(paste(per.target,collapse='_'),'_MP_',paste(per.type,collapse=''),'_MA',Nma,'proxy',paste(Inds,collapse='.'))
     if(length(per.target)==1){
-        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel))
+        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel,fname=fname))
     }else{
-        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel,subdata=subdata,idata=idata))
+        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel,subdata=subdata,idata=idata,fname=fname))
     }
 }
 

@@ -390,6 +390,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         }
         for(i in 1:length(input$per.target)){
             names <- colnames(data()[[tar[i]]])
+#            cat('names=',names,'\n')
             names <- names[-c(1,3)]#e.g. 'Time' and 'eRV' for RV data
             names <- c(names,'Window Function')
                                         #      nam <- c(nam,paste(names(data())[i],names,sep=':'))
@@ -764,7 +765,7 @@ output$color <- renderUI({
   output$Nbin <- renderUI({
       if(!is.null(data())){
           selectizeInput('Nbin','Number of moving steps',
-                  choices=c(5,10,20,50,100,200,500),selected=10,multiple=FALSE)
+                  choices=c(2,5,10,20,50,100,200,500),selected=10,multiple=FALSE)
 #          sliderInput("Nbin", "Number of moving steps", min = 5, max = 500,value=10)
       }
   })
@@ -776,7 +777,7 @@ output$color <- renderUI({
   })
 
   output$zoom <- renderUI({
-      sliderInput('range.zoom','Zoom-in period range', min = as.integer(1/10^(input$frange2[2])), max = min(100,as.integer(1/10^(input$frange2[1]))),value=c(max(10,1/10^(input$frange2[2])),min(30,1/10^(input$frange2[1]))),step=1)
+      sliderInput('range.zoom','Zoom-in period range', min = round(10*(1/10^(input$frange2[2])))/10, max = min(100,as.integer(1/10^(input$frange2[1]))),value=c(max(10,1/10^(input$frange2[2])),min(30,1/10^(input$frange2[1]))),step=0.1)
   })
 
   per1D.data <- eventReactive(input$plot1D,{
@@ -867,9 +868,10 @@ output$color <- renderUI({
 
     output$MP.data <- downloadHandler(
         filename = function() {
-            f1 <- gsub(" ",'_',Sys.time())
-            f2 <- gsub(":",'-',f1)
-            paste('periodogram2D_', f2, '.txt', sep='')
+#            f1 <- gsub(" ",'_',Sys.time())
+#            f2 <- gsub(":",'-',f1)
+#            paste('periodogram2D_', f2, '.txt', sep='')
+            paste0(MP.data()$fname,'.txt')
         },
         content = function(file) {
             tmp <- MP.data()
@@ -905,9 +907,10 @@ output$color <- renderUI({
 
     output$per2D.figure <- downloadHandler(
         filename = function() {
-            f1 <- gsub(" ",'_',Sys.time())
-            f2 <- gsub(":",'-',f1)
-            paste('periodogram2D_', f2, '.pdf', sep='')
+#            f1 <- gsub(" ",'_',Sys.time())
+#            f2 <- gsub(":",'-',f1)
+#            paste('periodogram2D_', f2, '.pdf', sep='')
+            paste0(MP.data()$fname,'_scale',input$scale,'_Dt',as.integer(input$Dt),'d.pdf')
         },
         content = function(file) {
             pdf(file,8,8)

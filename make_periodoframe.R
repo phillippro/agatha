@@ -1,4 +1,5 @@
 ####This file is an example for making PeriodoFrame: the computation part
+library(magicaxis)
 source('prepare_data.R',local=TRUE)
 source('periodoframe.R')#for PeriodoFrame
 source('periodograms.R')#for other periodograms
@@ -11,26 +12,19 @@ inds <- NULL
 sig <- TRUE
 RML <- TRUE
 nshow <- 1
-fname <- paste0('periodograms_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'modeltype',model.type,'_',star,'_NI',NI,'Nma',Nma,'_Nc',Nc,'_ofac',ofac,'_opt',opt.type,'_Nap',Nap,'_res',Np.max,loading,'_trend',trend)
+plot.type <- 'sep'# or 'comb'; how to make plots; separately or combine
+fname <- paste0('periodograms_proxy',plot.proxy,'_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'_',star,'_Nma',Nma,'_Inds',paste(Inds,collapse='.'),'_ofac',ofac,'_Np',Np.max)
 if(!file.exists('results/')) system(paste0('mkdir results'))
 fname <- paste0('results/',fname)
 ######plot
 leg.pos <- 'topright'
 pdf.name <- paste0(fname,'.pdf')
-if(sequential){
+if(plot.type!='sep'){
     pdf(pdf.name,8,8)
     size <- 1.0
     par(mfrow=c(2,2),mar=c(4.5,4.5,1,1),cex.lab=size,cex.axis=size,cex=size)
-    tit <- TRUE
-}else{
-    pdf(pdf.name,4,4)
-    size <- 1.0
-    par(mfrow=c(1,1),mar=c(4.5,4.5,1,1),cex.lab=size,cex.axis=size,cex=size)
     tit <- FALSE
 }
-t <- tab[,1]-min(tab[,1])
-y <- tab[,2]
-dy <- tab[,3]
 for(kk in 1:length(per.types)){
     per.type <- per.types[kk]
     if(per.type==per.type.seq){
@@ -51,30 +45,39 @@ for(kk in 1:length(per.types)){
                 rr <- per$res
             }
         }
-                                        #        cat('head(rr)=',head(rr),'\n')
         if(per.type=='BFP'){
-            per <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmax=fmax,progress=FALSE,quantify=quantify)
-            ylim <- range(min(median(per$power),0),1.1*max(per$power),5)
-            ylab <- 'log(BF)'
+            dP <- 0.1
+            if(subtract.rotation){
+                if(jj==2){
+                    fmin0 <- fmin
+                    fmax0 <- fmax
+                    fmin <- 1/132
+                    fmax <- 1/130
+                    dP <- 0.001
+                }else if(jj>2){
+                    fmin <- fmin0 
+                    fmax <- fmax0
+                }
+            }
+            per <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type=opt.type,model.type=model.type,fmin=fmin,fmax=fmax,progress=FALSE,quantify=quantify,dP=dP)
+            ylab <- 'ln(BF)'
         }
         if(per.type=='MLP'){
-            per <- MLP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,ofac=ofac,mar.type='part',model.type=model.type,fmax=fmax,opt.par=NULL,Indices=Indices,MLP.type=MLP.type)
-            ylim <- range(min(median(per$power),0),1.1*max(per$power))
+            per <- MLP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,ofac=ofac,mar.type='part',model.type=model.type,fmin=fmin,fmax=fmax,opt.par=NULL,Indices=Indices,MLP.type=MLP.type)
             if(RML){
                 ylab <- expression('log(ML/'*ML[max]*')')
             }else{
                 ylab <- 'log(ML)'
             }
+            ylab <- 'ln(BF)'
         }
         if(per.type=='GLS'){
             per <- gls(tab[,1],rr,tab[,3],ofac=ofac,fmax=fmax)
-            ylim <- range(median(per$power),max(per$power)+0.1*(max(per$power)-min(per$power)),per$sig.level)
 #            ylim <- c(min(median(per$power),0),1.1*max(per$power))
             ylab <- 'Power'
         }
         if(per.type=='BGLS'){
             per <- bgls(tab[,1],rr,tab[,3],ofac=ofac,fmax=fmax)
-            ylim <- range(median(per$power),max(per$power)+0.1*(max(per$power)-min(per$power)),per$sig.level)
             if(RML){
                 ylab <- expression('log(ML/'*ML[max]*')')
             }else{
@@ -83,33 +86,64 @@ for(kk in 1:length(per.types)){
         }
         if(per.type=='GLST'){
             per <- glst(tab[,1],rr,tab[,3],ofac=ofac,fmax=fmax)
-            ylim <- range(median(per$power),max(per$power)+0.1*(max(per$power)-min(per$power)),per$sig.level)
             ylab <- 'Power'
         }
         if(per.type=='LS'){
             per <- lsp(times=tab[,1]-min(tab[,1]),x=rr,ofac=ofac,from=NULL,to=fmax,alpha=c(0.1,0.01,0.001))
-            ylim <- range(median(per$power),max(per$power)+0.1*(max(per$power)-min(per$power)),per$sig.level)
-            ylab <- 'Power'
+            ylab <- 'Lomb-Scargle Power'
         }
                                         #            if(sd(rr)<sd(per$res)) break()
-        main <- paste0(per.type,'; ',jj,' signal')
+        if(plot.type=='sep'){
+            pname <- gsub('.pdf',paste0('_',jj,'sig.pdf'),pdf.name)
+            cat('output pdf:\n',pname,'\n')
+            pdf(pname,4,4)
+            size <- 1.2
+            par(mar=c(4.1,4.1,0.5,0.5),cex.lab=size,cex.axis=size,cex=size,mgp=c(2.5,1,0))
+            tit <- FALSE
+        }
+        if(tit){
+            main <- paste0(per.type,'; ',jj,' signal')
+        }else{
+            main <- ''
+        }
+        if(plot.proxy=='window'){
+            inds <- which(per$P<360)
+            per$P <- per$P[inds]
+            per$power <- per$power[inds]
+        }
+
+        ymin <- min(per$power)
+        ylim <- c(ymin,max(max(per$power)+0.2*(max(per$power)-ymin),per$sig.level[which(!is.na(per$sig.level))]))
         if(per.type=='MLP' | per.type=='BFP'){
-            plot(per$P,per$power,xlab='Period[d]',ylab=ylab,type='l',log='x',ylim=ylim,main=main)
+            plot(per$P,per$power,xlab='Period [day]',ylab=ylab,type='l',log='x',ylim=ylim,main=main,xaxt='n')
+            magaxis(side=1,tcl=-0.5)
         }else{
-            plot(per$P,per$power,xlab='Period[d]',ylab=ylab,type='l',log='x',ylim=ylim,main=main)
+            plot(per$P,per$power,xlab='Period [day]',ylab=ylab,type='l',log='x',ylim=ylim,main=main,xaxt='n')
+            magaxis(side=1,tcl=-0.5)
         }
-        if(length(inds)==0){
-            inds <- which(per$power.opt>max(per$sig.level))
-            if(length(inds)>0) inds <- inds[1:min(nshow,length(inds))]
-        }
-        abline(h=per$sig.level,lty=2)
-        if(length(inds)>0){
-            abline(v=per$ps[inds],col='red',lty=3,lwd=2)
-            text(x=per$ps[inds],y=per$power.opt[inds],pos=c(2,4),labels=paste0(format(per$ps[inds],digit=3),'d'),col='red')
+#        if(length(inds)==0){
+#            inds <- which(per$power.opt>max(per$sig.level))
+#            if(length(inds)>0) inds <- inds[1:min(nshow,length(inds))]
+                                        #        }
+        abline(v=131,col='steelblue')
+        if(plot.proxy!='window'){
+            abline(h=per$sig.level,lty=2)
+            pmaxs <- per$ps[1]
+            power.max <- per$power.opt[1]
+            offset <- c(0.08*(max(per$power)-ymin), 0.02*(max(per$power)-ymin))
+            text(pmaxs,power.max+offset[1],pos=3,labels=format(pmaxs,digit=4),col='red',cex=1.0)
+            arrows(pmaxs,power.max+offset[1],pmaxs,power.max+offset[2],col='red',length=0.05)
         }else{
-            abline(v=per$ps[inds],col='red',lty=3,lwd=2)
-            text(x=per$ps[inds],y=per$power.opt[inds],pos=4,offset=-0.1,labels=paste0(format(per$ps[inds],digit=3),'d'),col='red')
+        abline(v=24.7,col='red')
+        abline(v=92,col='red')
         }
+#        abline(v=per$ps[1],col='red',lty=3,lwd=2)
+#        text(x=per$ps[1],y=per$power.opt[1],pos=c(2,4),labels=paste0(format(per$ps[1],digit=3),'d'),col='red')
+#        else{
+#            abline(v=per$ps[inds],col='red',lty=3,lwd=2)
+#            text(x=per$ps[inds],y=per$power.opt[inds],pos=4,offset=-0.1,labels=paste0(format(per$ps[inds],digit=3),'d'),col='red')
+#        }
+if(plot.type=='sep'){dev.off()}
     }
 }
 ################################################
@@ -117,7 +151,9 @@ for(kk in 1:length(per.types)){
 ################################################
 ###save data
 ####output pdf
-cat('output pdf:\n')
-cat(pdf.name,'\n')
-dev.off()
+if(plot.type!='sep'){
+    cat('output pdf:\n')
+    cat(pdf.name,'\n')
+    dev.off()
+}
 

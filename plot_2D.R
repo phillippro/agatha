@@ -85,7 +85,7 @@ for(j in 1:Nwindow){
             }
         }
     }else{
-        plot(t,y,ylab='RV[m/s]',xaxt='n',yaxt=yaxt,pch=20,cex=0.5,col=colors[k])
+        plot(t,y,ylab='RV[m/s]',xaxt='n',yaxt=yaxt,pch=20,cex=0.5,col=colors[1])
     }
 }
 if(Nw>1){
@@ -95,11 +95,23 @@ if(Nw>1){
     lname[which(lname=='KECK')] <- 'HIRES'
     legend('topright',inset=c(-0.45,0),legend=lname,col=colors[(1:Nw)[-ind.rm]],pch=rep(20,Nw-1),xpd=NA)
 }
-#######periodograsm plot
-cols <- rainbow(length(y),start=rs)#
-###show signals; e.g. the signals in the HARPS RVs for HD41248
-#sigs <- c(13.4, 25.6)
+#######periodogram plot
+power1D <- c()
+for(j in 1:length(yy)){
+    if(type=='rel'){
+        power1D <- c(power1D,mean(zz[j,]))
+    }else{
+        power1D <- c(power1D,max(zz[j,]))
+    }
+}
+inds <- sort(power1D,decreasing=TRUE,index.return=TRUE)$ix
+sigs <- yy[inds]
+powers <- power1D[inds]
+tmp <- show.peaks(ps=sigs,powers=powers,levels=median(powers))
+sigs <- tmp[,1]
 ind.show <- which.min(sigs)
+###show signals; e.g. the signals in the HARPS RVs for HD41248
+cols <- rainbow(length(y),start=rs)#
 for(j in 1:Nwindow){
     if(j==1){
         par(mar = c(1.1, 6.1, 0, 0))

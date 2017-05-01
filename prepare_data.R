@@ -2,14 +2,18 @@ library(shiny)
 ############################################
 #####PartI: set parameters
 ############################################
-star <- 'ChallengeDataSet7_2season'
+#star <- 'LHS1140'
+star <- 'CoRoT7_HARPS_TERRA'
 #star <- 'GJ699'
 #star <- 'GJ699'
 #star <- 'HD172555'
 include.error <- FALSE
 np <- 0
 Nma <- 1
+ofac <- 10
 Np <- 0
+Inds <- 2
+subtract.rotation <- TRUE
 cummulative <- TRUE
 Ncum <- 0
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
@@ -19,7 +23,7 @@ tol <- 1e-16#numerical fitting precision tolerance
 trend <- TRUE
 #trend <- TRUE
 Nap <- 1#number of aperture
-Nc <- 1#1
+Nc <- 0#1
 per.types <- c('BFP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
 per.type.seq <- per.types[1]
@@ -29,9 +33,6 @@ quantify <- TRUE
 Np.max <- 3
 if(!sequential) Np.max <- 1
 ###To select the numbers of differential RVs and MA components, it is better not to include calibration data.
-if(model.type=='auto'){
-    Nc <- 0
-}
 leg.pos <- 'topright'
 MLP.type <- 'sub'#subtract the correlated noise from the data and then marginalize the non-correlated-noise parameters
 #MLP.type <- 'assign'#fix the correlated noise parameters at their optimal values and then marginalize the other parameters
@@ -78,7 +79,8 @@ if(loading){
     }
     Np <- e$Np
 }else{
-    file <- paste0('../data/aperture/',star,'/',star,'_HARPS.dat')
+#    file <- paste0('../data/aperture/',star,'/',star,'_HARPS.dat')
+    file <- paste0('../data/aperture/',star,'/',star,'.dat')
     if(!file.exists(file))    file <- paste0('data/',star,'.dat')
     tab <- read.table(file,header=TRUE,check.names=FALSE)
     if(include.error){
@@ -109,14 +111,14 @@ if(ncol(tab)==3){
 ########################
 #update <- FALSE
 #opt.types <- c('full','part','wr','rw','rep')
-ofac <- 1
-fmax <- 1#Pmin=0.5d
+fmax <- 1/1.2#Pmin=0.5d
+fmin <- 1/(max(tab[,1])-min(tab[,1]))
 mar.type <- 'part'
 Ndata <- nrow(tab)
 #####rescale indices
 Indices <- NA
 sortInd <- FALSE
-if(ncol(tab)>3){
+if(ncol(tab)>3 & !all(Inds==0)){
     Indices <- as.matrix(tab[,4:ncol(tab)])
     if(!is.matrix(Indices) & !is.data.frame(Indices)){
         Indices <- matrix(Indices,ncol=1)
@@ -128,10 +130,18 @@ if(ncol(tab)>3){
 t <- tab[,1]
 y <- tab[,2]
 dy <- tab[,3]
+plot.proxy <- 'NA'
+if(plot.proxy=='window'){
+    y <- rep(1,length(t))
+    dy <- rep(0.1,length(t))
+    per.types <- 'LS'
+    sequential <- FALSE
+    Nma <- 0
+    Inds <- 0
+}
 data <- cbind(t,y,dy)
-Inds <- 3
 NI <- length(which(Inds!=0))
 #model.type <- 'MA'#'MA' or 'auto'
-cat('Ndata=',Ndata,'; Nma=',Nma,'; NI=',NI,'; Nap=',Nap,'; Nc=',Nc,'; opt.type=',opt.type,'; model.type=',model.type,'; ofac=',ofac,'; tol=',tol,'\n')
+cat('Ndata=',Ndata,'; Nma=',Nma,'; NI=',NI,'; Nap=',Nap,'; opt.type=',opt.type,'; model.type=',model.type,'; ofac=',ofac,'; tol=',tol,'\n')
 
 #
