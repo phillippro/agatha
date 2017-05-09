@@ -91,7 +91,8 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
 
     output$per.type.seq <- renderUI({
         if(is.null(input$sequence)) return()
-        if(input$sequence) selectInput("per.type.seq",'Periodogram used to find additional signals',choices=input$per.type,selected=NULL,multiple=FALSE)
+        if(!input$sequence) return()
+        selectInput("per.type.seq",'Periodogram used to find additional signals',choices=input$per.type,selected=NULL,multiple=FALSE)
     })
 
  output$Nsig.max <- renderUI({
@@ -173,9 +174,17 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     output$Inds2 <- renderUI({
         if(is.null(data()) | is.null(input$per.target2)) return()
         lapply(1:Ntarget2(),function(i){
-            cat('i=',i,'\n')
             selectInput(paste0("Inds2.",i),paste('Noise proxies for',input$per.target2[i]),choices = 0:NI.max()[input$per.target2[i]],selected = 0,multiple=TRUE)
         })
+    })
+
+    output$prange2 <- renderUI({
+        if(is.null(input$Dt) | is.null(data()) | is.null(input$per.target2)) return()
+        Dt <- signif(tspan()*as.numeric(input$Dt),3)
+        fmin <- 1/Dt
+        logpmin <- -1
+        logpmax <- signif(log10(Dt),2)
+        sliderInput("prange2","Period range in base-10 log scale",min = logpmin,max = logpmax,value = c(0.1,logpmax),step=0.1)
     })
 
     output$proxy.text <- renderUI({
@@ -535,8 +544,18 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     return(unique(vars))
   })
 
+    prange <- reactive({
+        if(is.null(input$prange)) return()
+        as.numeric(10^input$prange)
+    })
+
+    prange2 <- reactive({
+        if(is.null(input$prange2)) return()
+        as.numeric(10^input$prange2)
+    })
+
   per.par <- reactive({
-      vals <- list(ns=ns(),ofac=input$ofac,frange=10^input$frange,per.type=input$per.type,per.target=input$per.target)
+      vals <- list(ns=ns(),ofac=input$ofac,frange=1/prange()[2:1],per.type=input$per.type,per.target=input$per.target)
       if(any(input$per.type=='MLP' | input$per.type=='BFP')){
           Nmas <- c()
           Inds <- list()
@@ -560,7 +579,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
   })
 
   per.par2 <- reactive({
-      vals <- list(ns=ns(),ofac=input$ofac2,frange=10^input$frange2,per.type=input$per.type2,per.target=input$per.target2)
+      vals <- list(ns=ns(),ofac=input$ofac2,frange=1/prange2()[2:1],per.type=input$per.type2,per.target=input$per.target2)
       if(any(input$per.type2=='MLP'|input$per.type2=='BFP')){
           Nmas <- c()
           Inds <- list()
@@ -577,7 +596,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
       }else{
           vals <- c(vals,Nmas=0,Inds=0)
       }
-      vals <- c(vals,Dt=as.integer(input$Dt),Nbin=as.integer(input$Nbin),alpha=as.integer(input$alpha),scale=input$scale,pmin.zoom=input$range.zoom[1],pmax.zoom=input$range.zoom[2],show.signal=input$show.signal)
+      vals <- c(vals,Dt=signif(tspan()*as.numeric(input$Dt),3),Nbin=as.integer(input$Nbin),alpha=as.integer(input$alpha),scale=input$scale,pmin.zoom=input$range.zoom[1],pmax.zoom=input$range.zoom[2],show.signal=input$show.signal)
       return(vals)
   })
 
@@ -750,17 +769,28 @@ output$color <- renderUI({
     }
     return(logic)
   })
+    
+    tspan <- reactive({
+        if(is.null(data())) return()
+        tmin <- min(data()[[1]][,1])
+        tmax <- max(data()[[1]][,1])
+        dt <- tmax-tmin
+        return(dt)
+    })
 
   output$Dt <- renderUI({
 #      cat('input$plot2D=',input$plot2D,'\n')
       if(!is.null(data())){
-          tmin <- min(data()[[1]][,1])
-          tmax <- max(data()[[1]][,1])
-          selectizeInput('Dt','Moving time window [time unit]',
-                  choices=c(10,20,50,100,200,300,400,500,600,700,800,900,1000,1200,1500,2000,3000,4000,5000,6000,7000,8000,9000,10000),selected=1000,multiple=FALSE)#round((tmax-tmin)/150)*100
+          sliderInput('Dt','Moving time window [in unit of the whole time span]',
+                  min=0.01,max=0.99,value=0.5,step=0.01)
 #          sliderInput("Dt", "Moving time window", min = 100, max = ,value=min(1000,round(tmax-tmin)),step=100)
       }
   })
+
+   output$textDt <- renderUI({
+        if(is.null(input$Dt)) return()
+        helpText(paste0("The time window is ",signif(tspan()*as.numeric(input$Dt),3)," time unit. The user should adjust it to guarantee the existence of a few data points in the time window for each moving step."))
+    })
 
   output$Nbin <- renderUI({
       if(!is.null(data())){
@@ -772,12 +802,19 @@ output$color <- renderUI({
 
   output$alpha <- renderUI({
       if(!is.null(data())){
-          sliderInput('alpha','Truncate the periodogram power to the median minus X*(standard deviation)', min = 0, max = 30,value=10)
+          sliderInput('alpha','Truncate the color bar to optimize visualization', min = 0, max = 10,value=5,step=0.1)
       }
   })
 
   output$zoom <- renderUI({
-      sliderInput('range.zoom','Zoom-in period range', min = round(10*(1/10^(input$frange2[2])))/10, max = min(100,as.integer(1/10^(input$frange2[1]))),value=c(max(10,1/10^(input$frange2[2])),min(30,1/10^(input$frange2[1]))),step=0.1)
+      if(is.null(input$prange2)) return()
+      pr <- 10^as.numeric(input$prange2)
+      pmin <- pr[1]-pr[1]%%0.1
+      pmax <- pr[2]-pr[2]%%0.1
+      plow <- pmin
+      pup <- pmin+0.1*(pmax-pmin)
+      pup <- pup-pup%%0.1
+      sliderInput('range.zoom','Zoom-in period range', min = pmin, max = pmax,value=c(plow,pup),step=0.1)
   })
 
   per1D.data <- eventReactive(input$plot1D,{
@@ -910,7 +947,7 @@ output$color <- renderUI({
 #            f1 <- gsub(" ",'_',Sys.time())
 #            f2 <- gsub(":",'-',f1)
 #            paste('periodogram2D_', f2, '.pdf', sep='')
-            paste0(MP.data()$fname,'_scale',input$scale,'_Dt',as.integer(input$Dt),'d.pdf')
+            paste0(MP.data()$fname,'_scale',input$scale,'_Dt',signif(tspan()*as.numeric(input$Dt),3),'d.pdf')
         },
         content = function(file) {
             pdf(file,8,8)

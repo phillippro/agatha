@@ -13,7 +13,7 @@ sig <- TRUE
 RML <- TRUE
 nshow <- 1
 plot.type <- 'sep'# or 'comb'; how to make plots; separately or combine
-fname <- paste0('periodograms_proxy',plot.proxy,'_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'_',star,'_Nma',Nma,'_Inds',paste(Inds,collapse='.'),'_ofac',ofac,'_Np',Np.max)
+fname <- paste0('periodograms_proxy',plot.proxy,'_',paste(per.types,collapse='0'),'_Ndata_',Ndata,'_',target,'_Nma',Nma,'_Inds',paste(Inds,collapse='.'),'_ofac',ofac,'_Np',Np.max)
 if(!file.exists('results/')) system(paste0('mkdir results'))
 fname <- paste0('results/',fname)
 ######plot
@@ -47,14 +47,17 @@ for(kk in 1:length(per.types)){
         }
         if(per.type=='BFP'){
             dP <- 0.1
-            if(subtract.rotation){
-                if(jj==2){
+            ind.man <- 1
+            if(subtract.manual){
+                if(jj==ind.man){
                     fmin0 <- fmin
                     fmax0 <- fmax
-                    fmin <- 1/132
-                    fmax <- 1/130
+#                    fmin <- 1/132
+#                    fmax <- 1/130
+                    fmin <- 1/25.9
+                    fmax <- 1/24.5
                     dP <- 0.001
-                }else if(jj>2){
+                }else if(jj>ind.man){
                     fmin <- fmin0 
                     fmax <- fmax0
                 }
@@ -69,7 +72,7 @@ for(kk in 1:length(per.types)){
             }else{
                 ylab <- 'log(ML)'
             }
-            ylab <- 'ln(BF)'
+            ylab <- 'log(ML)'
         }
         if(per.type=='GLS'){
             per <- gls(tab[,1],rr,tab[,3],ofac=ofac,fmax=fmax)

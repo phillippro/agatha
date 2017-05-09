@@ -2,18 +2,20 @@ library(shiny)
 ############################################
 #####PartI: set parameters
 ############################################
-#star <- 'LHS1140'
-star <- 'CoRoT7_HARPS_TERRA'
+#target <- 'LHS1140_TERRA_2season'
+target <- 'LHS1140_HARPS_res2sig_2season'
+star <- gsub('_.+','',target)
+#star <- 'CoRoT7_HARPS_TERRA'
 #star <- 'GJ699'
 #star <- 'GJ699'
 #star <- 'HD172555'
 include.error <- FALSE
 np <- 0
-Nma <- 1
-ofac <- 10
+Nma <- 0
+ofac <- 5
 Np <- 0
-Inds <- 2
-subtract.rotation <- TRUE
+Inds <- 7
+subtract.manual <- TRUE
 cummulative <- TRUE
 Ncum <- 0
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
@@ -24,7 +26,7 @@ trend <- TRUE
 #trend <- TRUE
 Nap <- 1#number of aperture
 Nc <- 0#1
-per.types <- c('BFP')#the periodograms to calculate
+per.types <- c('MLP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
 per.type.seq <- per.types[1]
 sequential <- TRUE
@@ -80,9 +82,10 @@ if(loading){
     Np <- e$Np
 }else{
 #    file <- paste0('../data/aperture/',star,'/',star,'_HARPS.dat')
-    file <- paste0('../data/aperture/',star,'/',star,'.dat')
-    if(!file.exists(file))    file <- paste0('data/',star,'.dat')
+    file <- paste0('../data/aperture/',star,'/',target,'.dat')
+    if(!file.exists(file))    file <- paste0('data/',target,'.dat')
     tab <- read.table(file,header=TRUE,check.names=FALSE)
+    cat('read file:',file,'\n')
     if(include.error){
         Nproxy <- (ncol(tab)-3)/2
         tab <- cbind(tab[,1:3],tab[,2+(1:Nproxy)*2])
@@ -101,6 +104,8 @@ if(loading){
 if(ncol(tab)==3){
     Indices <- NA
     Inds <- 0
+}else{
+    Indices <- as.matrix(tab[,3:ncol(tab),drop=FALSE])
 }
 #NI0 <- NI <- ncol(tab)-3
 ############################################
@@ -116,17 +121,6 @@ fmin <- 1/(max(tab[,1])-min(tab[,1]))
 mar.type <- 'part'
 Ndata <- nrow(tab)
 #####rescale indices
-Indices <- NA
-sortInd <- FALSE
-if(ncol(tab)>3 & !all(Inds==0)){
-    Indices <- as.matrix(tab[,4:ncol(tab)])
-    if(!is.matrix(Indices) & !is.data.frame(Indices)){
-        Indices <- matrix(Indices,ncol=1)
-    }
-    for(j in 1:ncol(Indices)){
-        Indices[,j] <- scale(Indices[,j])
-    }
-}
 t <- tab[,1]
 y <- tab[,2]
 dy <- tab[,3]

@@ -279,6 +279,7 @@ rv.red <- function(par,df){
     if(NI>0){
         r <- r+white.par[(ind0+2):length(white.par)]%*%Indices[1:NI,]
     }
+
     if(type=='period'){
         r <- r+white.par[1]*cos(omega*t)+white.par[2]*sin(omega*t)
     }
@@ -293,6 +294,7 @@ rv.red <- function(par,df){
     }else{
         v <- as.numeric(r)
     }
+
     opt.par <- white.par
     return(list(v=v,par=opt.par))
 }
@@ -735,25 +737,27 @@ global.notation <- function(t,y,dy,Indices,Nma,NI){
     T <- sum(w*t)
     Y <- sum(w*y)
     if(NI>0){
-        I <- w%*%Indices[,1:NI]
+        I <- w%*%Indices[,1:NI,drop=FALSE]
     }else{
         I <- 0
     }
     YY <- sum(w*y^2)
     YT <- sum(w*y*t)
     if(NI>0){
-        YI <- (w*y)%*%Indices[,1:NI]
+        YI <- (w*y)%*%Indices[,1:NI,drop=FALSE]
     }else{
         YI <- 0
     }
     TT <- sum(w*t^2)
     if(NI>0){
-        TI <- (w*t)%*%Indices[,1:NI]
+        TI <- (w*t)%*%Indices[,1:NI,drop=FALSE]
+    }else{
+        TI <- 0
     }
     II <- array(data=NA,dim=c(NI,NI))
     if(NI>0){
         for(i in 1:NI){
-            II[i,] <- (w*Indices[,i])%*%Indices[,1:NI]
+                II[i,] <- (w*Indices[,i])%*%Indices[,1:NI,drop=FALSE]
         }
     }
 #####parameter boundaries
@@ -801,20 +805,21 @@ global.notation <- function(t,y,dy,Indices,Nma,NI){
 
 ####Marginalized likelihood periodogram
 MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,fmax=NULL,fmin=NULL,tspan=NULL,sampling='freq',model.type='MA',opt.par=NULL,Indices=NA,MLP.type='sub'){
-#    unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
+                                        #    unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
     unit <- 1
-    if(all(Inds==0)){
-        NI <- 0
-#        Indices <- NA
-    }else{
-        NI <- length(Inds)
-        if(NI>0){
-            if(NI<2){
-                Indices <- matrix(Indices[,Inds],ncol=1)
-            }else{
-                Indices <- Indices[,Inds]
+    if(length(Inds)>0){
+        if(all(Inds==0)){
+            NI <- 0
+        }else{
+            Inds <- Inds[Inds>0]
+            NI <- length(Inds)
+            Indices <- as.matrix(Indices[,Inds,drop=FALSE])
+            for(j in 1:ncol(Indices)){
+                Indices[,j] <- scale(Indices[,j])
             }
         }
+    }else{
+        Inds <- 0
     }
     if(NI==0) d <- 0
     if(Nma==0) m <- 0
@@ -829,7 +834,6 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     if(is.null(fmax)){
         fmax <- fnyq
     }
-#    cat('Number of independent frequencies=', (fnyq-fmin)*tspan,'\n')
     if(sampling=='logP'){
         logP.max <- log(1/fmin)
         logP.min <- log(1/fmax)
@@ -1054,6 +1058,7 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
 BFP.comp <- function(t, y, dy, Nmas,NI.inds=NULL,Indices=NULL){
     t <- t-min(t)
     Ndata <- length(t)
+    Indices <- as.matrix(Indices)
     #######define notations and variables
     if(is.null(NI.inds)){
         vars <- global.notation(t,y,dy,Indices=Indices,Nma=0,NI=0)
@@ -1121,18 +1126,19 @@ combine.data <- function(data,Ninds,Nmas){
 BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',progress=TRUE,quantify=FALSE,dP=0.1){
   #  unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
     unit <- 1
-    if(all(Inds==0)){
-        NI <- 0
-        Indices <- NA
-    }else{
-        NI <- length(Inds)
-        if(NI>0){
-            if(NI<2){
-                Indices <- matrix(Indices[,Inds],ncol=1)
-            }else{
-                Indices <- Indices[,Inds]
+    if(length(Inds)>0){
+        if(all(Inds==0)){
+            NI <- 0
+        }else{
+            Inds <- Inds[Inds>0]
+            NI <- length(Inds)
+            Indices <- as.matrix(Indices[,Inds,drop=FALSE])
+            for(j in 1:ncol(Indices)){
+                Indices[,j] <- scale(Indices[,j])
             }
         }
+    }else{
+        Inds <- 0
     }
     if(NI==0) d <- 0
     if(Nma==0) m <- 0
@@ -1306,8 +1312,6 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     inds <- which(logBF>(max(logBF)+log(0.01)))
     Popt <- P[inds]
     opt.par <- opt.pars[inds,]
-#    cat('dim(opt.pars)=',dim(opt.pars),'\n')
-#    cat('colnames(opt.pars)=',colnames(opt.pars),'\n')
     logBF.opt <- logBF[inds]
     ##sort
     if(length(inds)>1){

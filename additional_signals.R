@@ -13,7 +13,7 @@ for(jj in 2:Nsig.max){
     }
     if(per.type.seq=='BFP'){
         rv.ls <- BFP(tab[,1],rr,tab[,3],Nma=Nma,Inds=Inds,Indices=Indices,ofac=ofac,opt.type='sl',model.type='man',fmin=frange[1],fmax=frange[2],quantify=quantify)
-        ylab <- 'log(BF)'
+        ylab <- 'ln(BF)'
         name <- 'logBF'
     }
     if(per.type.seq=='MLP'){

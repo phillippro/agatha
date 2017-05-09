@@ -79,15 +79,8 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
         ypar <- var
         ypars <- c(ypars,gsub(' ','',ypar))
         Indices <- NA
-        if(ncol(tab)>3 & !all(unlist(Inds)==0)){
-            Indices <- as.matrix(tab[,4:ncol(tab)])
-            if(!is.matrix(Indices) & !is.data.frame(Indices)){
-                Indices <- matrix(Indices,ncol=1)
-            }
-            Indices <- as.matrix(Indices)
-            for(j in 1:ncol(Indices)){
-                Indices[,j] <- as.numeric(scale(Indices[,j]))
-            }
+        if(ncol(tab)>3){
+            Indices <- tab[,4:ncol(tab),drop=FALSE]
         }
         if(ypar==ns[1]){
             dy <- tab[,3]
@@ -308,15 +301,8 @@ per2D.data <- function(vars,per.par,data){
     }else{
         instrument <- per.target
         tab <- data[[per.target]]
-        if(ncol(tab)>3 & !all(unlist(Inds)==0)){
-            Indices <- as.matrix(tab[,4:ncol(tab)])
-            if(!is.matrix(Indices) & !is.data.frame(Indices)){
-                Indices <- matrix(Indices,ncol=1)
-            }
-            Indices <- as.matrix(Indices)
-            for(j in 1:ncol(Indices)){
-                Indices[,j] <- as.numeric(scale(Indices[,j]))
-            }
+        if(ncol(tab)>3){
+            Indices <- as.matrix(tab[,4:ncol(tab),drop=FALSE])
         }
     }
     ypar <- var
@@ -370,7 +356,7 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
         Nvary <- NI.max-Nbasic
         if(proxy.type=='cum' & Nvary>0 & Nproxy>0){
             NI.inds[[1]] <- Nbasic
-            Indices <- data[,4:ncol(data)]
+            Indices <- data[,4:ncol(data),drop=FALSE]
             cors <- c()
             for(j in 1:ncol(Indices)){
                 if(sd(Indices[,j])==0){
@@ -411,7 +397,7 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
         }
     }
     if(ncol(data)>3){
-        out <- BFP.comp(t, y, dy, Nmas=0:Nma.max,NI.inds=NI.inds,Indices=as.matrix(data[4:ncol(data)]))
+        out <- BFP.comp(t, y, dy, Nmas=0:Nma.max,NI.inds=NI.inds,Indices=data[,4:ncol(data),drop=FALSE])
     }else{
         out <- BFP.comp(t, y, dy, Nmas=0:Nma.max,NI.inds=0,Indices=NA)
     }

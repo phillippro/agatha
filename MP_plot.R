@@ -1,10 +1,11 @@
 library(fields)
 library(magicaxis)
 if(scale) zz <- zz.rel
-th <- median(zz)-alpha*sd(zz)
-zlim <- c(th,max(zz))
+#th <- median(zz)-alpha*sd(zz)
+#zlim <- c(th,max(zz))
+zlim <- range(zz)
 xlim <- range(t)
-zz[zz<th] <- th+1e-3
+#zz[zz<th] <- th+1e-3
 size <- 1.5
 ###plot
 s <- 5
@@ -46,7 +47,7 @@ for(j in 1:2){
     }
 }
 #######periodograsm plot
-cols <- rainbow(length(y),start=0)#
+cols <- rainbow(length(y),start=alpha/10)#
 ###show signals; e.g. the signals in the HARPS RVs for HD41248
 ##find strong signals
 power1D <- c()
@@ -64,10 +65,6 @@ tmp <- show.peaks(ps=sigs,powers=powers,levels=median(powers))
 sigs <- tmp[,1]
 #sigs <- c(0.85,3.7,8.9)##define sigs manually
 ind.show <- which.min(sigs)
-#cat('range(zz)=',range(zz),'\n')
-#cat('length(xx)=',length(xx),'\n')
-#cat('length(yy)=',length(yy),'\n')
-#cat('dim(zz)=',dim(zz),'\n')
 for(j in 1:2){
     if(j==1){
         par(mar = c(1, s, 0, 0))
@@ -134,4 +131,4 @@ for(j in 1:2){
 ###make pretty axes
     axis(side=3,labels=FALSE)
 }
-image.plot(t(zz),col=cols,legend.only=TRUE,zlim = zlim,legend.mar=9,xpd=NA)
+image.plot(t(zz),col=cols,legend.only=TRUE,zlim = zlim,legend.mar=10,xpd=NA)
