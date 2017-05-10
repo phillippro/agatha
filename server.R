@@ -30,7 +30,7 @@ p {
 <br />
 <p>Agatha is the name of my wife's most favorite crime novelist, Agatha Christie. Similar to the investigations of various crimes in the detective novels, the Agatha algorithm is to find the weak signals embedded in correlated noise.
 
-This web app is based on the code in GitHub: <a href='https://github.com/phillippro/agatha'>https://github.com/phillippro/agatha</a>. If you use this web app in your work, please cite 'Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangling periodic signals from correlated noise in a periodogram framework, submitted to MNRAS'. The abstract of this paper is available <a href='https://www.dropbox.com/s/4ug8tfqyfcsr9gx/Agatha_abstract.pdf?dl=0'>here</a>.</p>
+This web app is based on the code in GitHub: <a href='https://github.com/phillippro/agatha'>https://github.com/phillippro/agatha</a>. If you use this web app in your work, please cite 'Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangling periodic signals from correlated noise in a periodogram framework, MNRAS in press'. This paper is put on <a href='https://arxiv.org/abs/1705.03089'>arxiv</a>.</p>
 
 <p>Agatha has the following features:</p>
 <ul>
