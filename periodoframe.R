@@ -507,11 +507,12 @@ sopt <- function(pars,type='noise'){
         likes <- c()
         for(kk in 1:Ntry){
             for(j in 1:5){
-                start <- as.list(rnorm(length(start),unlist(start0),as.numeric((par.up-par.low)/100)))
+                start <- as.list(rnorm(length(start0),unlist(start0),as.numeric((par.up-par.low)/100)))
                 if(all(unlist(start)>par.low & unlist(start)<par.up)) break()
             }
             names(start) <- names(start0)
             out <- try(nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500)),TRUE)#ftol=1e-16,ptol=1e-16#ftol=tol,ptol=tol
+#            out <- nls.lm(par = start,lower=par.low,upper=par.up,fn = rv.red.res,df=df,control=nls.lm.control(maxiter=500))
             if(class(out)!='try-error'){
                 opt.par <- as.list(coef(out))
                 yp <- rv.red(par=opt.par, df=df)$v

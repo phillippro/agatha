@@ -3,7 +3,7 @@ library(shiny)
 #####PartI: set parameters
 ############################################
 #target <- 'LHS1140_TERRA_2season'
-target <- 'LHS1140_HARPS_res2sig_2season'
+target <- 'HD26965_CHI'
 star <- gsub('_.+','',target)
 #star <- 'CoRoT7_HARPS_TERRA'
 #star <- 'GJ699'
@@ -14,7 +14,7 @@ np <- 0
 Nma <- 0
 ofac <- 5
 Np <- 0
-Inds <- 7
+Inds <- 0
 subtract.manual <- TRUE
 cummulative <- TRUE
 Ncum <- 0
@@ -26,7 +26,7 @@ trend <- TRUE
 #trend <- TRUE
 Nap <- 1#number of aperture
 Nc <- 0#1
-per.types <- c('MLP')#the periodograms to calculate
+per.types <- c('BFP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
 per.type.seq <- per.types[1]
 sequential <- TRUE
@@ -83,6 +83,7 @@ if(loading){
 }else{
 #    file <- paste0('../data/aperture/',star,'/',star,'_HARPS.dat')
     file <- paste0('../data/aperture/',star,'/',target,'.dat')
+    if(!file.exists(file))        file <- paste0('../data/aperture/',star,'/',target,'.vels')
     if(!file.exists(file))    file <- paste0('data/',target,'.dat')
     tab <- read.table(file,header=TRUE,check.names=FALSE)
     cat('read file:',file,'\n')
