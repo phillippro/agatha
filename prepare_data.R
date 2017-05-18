@@ -3,7 +3,7 @@ library(shiny)
 #####PartI: set parameters
 ############################################
 #target <- 'LHS1140_TERRA_2season'
-target <- 'HD26965_CHI'
+target <- 'HD26965_KECK_noout'
 star <- gsub('_.+','',target)
 #star <- 'CoRoT7_HARPS_TERRA'
 #star <- 'GJ699'
@@ -11,12 +11,12 @@ star <- gsub('_.+','',target)
 #star <- 'HD172555'
 include.error <- FALSE
 np <- 0
-Nma <- 0
-ofac <- 5
+Nma <- 1
+ofac <- 2
 Np <- 0
 Inds <- 0
-subtract.manual <- TRUE
-cummulative <- TRUE
+subtract.manual <- FALSE#TRUE
+cummulative <- FALSE#TRUE
 Ncum <- 0
 opt.type <- 'sl'#nl(nonlinear fitting all parameters; i.e. without using the formula ) or sl(semi-linear fitting)
 #model.type <- 'auto'#manually setting the number of MA components and differential RVs

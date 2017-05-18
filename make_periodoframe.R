@@ -128,7 +128,7 @@ for(kk in 1:length(per.types)){
 #            inds <- which(per$power.opt>max(per$sig.level))
 #            if(length(inds)>0) inds <- inds[1:min(nshow,length(inds))]
                                         #        }
-        abline(v=131,col='steelblue')
+#        abline(v=131,col='steelblue')
         if(plot.proxy!='window'){
             abline(h=per$sig.level,lty=2)
             pmaxs <- per$ps[1]

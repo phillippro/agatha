@@ -402,13 +402,14 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         if(length(input$per.target)>0){
             tar <- input$per.target
         }
-        if(length(input$per.target2)>0){
-            tar <- input$per.target2
-        }
+#        if(length(input$per.target2)>0){
+#            tar <- input$per.target2
+#        }
         for(i in 1:length(input$per.target)){
             names <- colnames(data()[[tar[i]]])
 #            cat('names=',names,'\n')
             names <- names[-c(1,3)]#e.g. 'Time' and 'eRV' for RV data
+#            cat('names=',names,'\n')
             names <- c(names,'Window Function')
                                         #      nam <- c(nam,paste(names(data())[i],names,sep=':'))
             nam <- c(nam,names)
@@ -779,9 +780,15 @@ output$color <- renderUI({
   })
     
     tspan <- reactive({
-        if(is.null(data())) return()
-        tmin <- min(data()[[1]][,1])
-        tmax <- max(data()[[1]][,1])
+        if(is.null(data()) | is.null(input$per.target2)) return()
+        ts.min <- ts.max <- c()
+        for(i in 1:length(input$per.target2)){
+            tmp <- data()[[input$per.target2[i]]][,1]
+            ts.min <- c(ts.min,min(tmp))
+            ts.max <- c(ts.max,max(tmp))
+        }
+        tmin <- min(ts.min)
+        tmax <- max(ts.max)
         dt <- tmax-tmin
         return(dt)
     })

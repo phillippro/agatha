@@ -273,8 +273,18 @@ rv.red <- function(par,df){
         }
     }
     white.par <- try(solve(lin.mat,vec.rh,tol=tol),TRUE)#gamma,beta,dj
-    if(class(white.par)=='error')     white.par <- solve(lin.mat,vec.rh,tol=tol2)
+    if(class(white.par)=='try-error')     white.par <- try(solve(lin.mat,vec.rh,tol=tol2))
+    if(class(white.par)=='try-error')     white.par <- solve(lin.mat,vec.rh,tol=tol2^3)
     ind0 <- length(white.par)-NI-1
+if(length(white.par)==1){
+    cat('white.par=',white.par,'\n')
+    cat('lin.mat=',c(lin.mat),'\n')
+    cat('det(lin.mat)=',det(lin.mat),'\n')
+    cat('dim(lin.mat)=',dim(lin.mat),'\n')
+    cat('NI=',NI,'\n')
+    cat('length(white.par)=',length(white.par),'\n')
+    cat('ind0=',ind0,'\n')
+}
     r <- white.par[ind0]+white.par[ind0+1]*t
     if(NI>0){
         r <- r+white.par[(ind0+2):length(white.par)]%*%Indices[1:NI,]
@@ -693,6 +703,10 @@ par.integral <- function(data,Indices,sj,m,d,type='noise',logtau=NULL,omega=NULL
         V <- CCp*SSp*TTp*U-SSp*CTp^2*U-CCp*STp^2*U-CCp*SSp*R^2
         if(V<=0){
             cat('V=',V,'is not positive for f=',omega/(2*pi),'!\n')
+#            V <- V+1e-30
+            cat('Q=',Q,'\n')
+            cat('U=',U,'\n')
+            cat('R=',R,'\n')
         }
         X <- SSp*YCp^2*U+CCp*YSp^2*U-YYp*CCp*SSp*U+CCp*SSp*Q^2
         logL <- log((2*pi)^2/sqrt(abs(V)))-2*log(W)+W*((X+(CCp*SSp*YTp*U-YCp*CTp*SSp*U-YSp*STp*CCp*U+CCp*SSp*Q*R)^2/V)/(2*CCp*SSp*U))
@@ -1126,6 +1140,8 @@ combine.data <- function(data,Ninds,Nmas){
 ####Bayes factor periodogram
 BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',progress=TRUE,quantify=FALSE,dP=0.1){
   #  unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
+#    cat('head(t)=',head(t),'\n')
+#    cat('head(y)=',head(y),'\n')
     unit <- 1
     if(length(Inds)>0){
         if(all(Inds==0)){
@@ -1365,7 +1381,7 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
             if(any(is.na(Indices)) | is.null(Indices)){
                 index <- Indices
             }else{
-                index <- Indices[inds,]
+                index <- Indices[inds,,drop=FALSE]
             }
             if(per.type=='BGLS'){
                 tmp <- bgls(t=t[inds],y=y[inds],err=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt)

@@ -13,7 +13,7 @@ for(per.type in per.types){
 Nwindow <- 10
 #colors <- c('black','red','blue','green','orange','brown','cyan','pink')
 scale <- TRUE
-Dt <- 100#time span of the time window
+Dt <- 1000#time span of the time window
 Nbin <- 10#the steps required to cover the whole data baseline by moving the window
 #over sampling factor
 #per.type <- 'BFP'##type of moving periodogram: 'MLP' or 'BFP' or 'gls' or 'bgls'

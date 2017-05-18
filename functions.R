@@ -111,7 +111,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
                 }else{
                     quantify <- FALSE
                 }
-                rv.ls <- BFP(t=tab[,1]-min(tab[,1]),y=y,dy=dy,
+                rv.ls <- BFP(t=tab[,1],y=y,dy=dy,
                              Nma=Nma,Inds=Inds,model.type='man',Indices=Indices,
                              ofac=ofac,fmin=frange[1],fmax=frange[2],quantify=quantify)
                 ylab <- 'ln(BF)'
