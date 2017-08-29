@@ -140,7 +140,7 @@ shinyUI(fluidPage(
                          helpText("The above parameters are called 'calculating parameters', which are used for calculate the moving periodogram.","The following parameters are called 'visualization parameters', and are set to optimize the visulization of signals."),
                          uiOutput("alpha"),
                          uiOutput('zoom'),
-                         checkboxInput('scale','Scaling power',value=FALSE),
+                         checkboxInput('scale','Normalize power',value=TRUE),
                          checkboxInput('show.signal','Show significant signals',value=TRUE),
                          helpText("If you change the calculating parameters, click both 'calculate' and 'plot' to show the 2D periodogram.", "If you only change the visualization parameters, only click 'plot' to show the periodogram."),
                          actionButton('data.update', 'calculate'),

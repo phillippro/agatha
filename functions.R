@@ -137,7 +137,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             if(!exists('Inds')){
                 Inds <- 0
             }
-            f <-  paste0(paste(per.target,collapse='_'),'_',gsub(' ','',ypar),'_',per.type,'_MA',Nma,'proxy',paste(Inds,collapse='.'),'_1sig_',format(rv.ls$P[which.max(rv.ls$power)],digit=2),'d')
+            f <-  paste0(paste(per.target,collapse='_'),'_',gsub(' ','',ypar),'_',per.type,'_MA',paste(Nmas,collapse=''),'proxy',paste(Inds,collapse='.'),'_1sig_',format(rv.ls$P[which.max(rv.ls$power)],digit=2),'d')
         }else{
             rv.ls <- lsp(times=tab[,1]-min(tab[,1]),x=rep(1,nrow(tab)),ofac=ofac,from=frange[1],to=frange[2],alpha=c(0.1,0.01,0.001))
             tit <- paste0('LS;',instrument,';',ypar)
@@ -148,7 +148,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
             if(!exists('Inds')){
                 Inds <- 0
             }
-            f <-  paste0(paste(per.target,collapse='_'),'_',gsub(' ','',ypar),'_',pt,'_MA',Nma,'proxy',paste(Inds,collapse='.'),'_1sig_',format(rv.ls$P[which.max(rv.ls$power)],digit=2),'d')            
+            f <-  paste0(paste(per.target,collapse='_'),'_',gsub(' ','',ypar),'_',pt,'_MA',paste(Nmas,collapse=''),'proxy',paste(Inds,collapse='.'),'_1sig_',format(rv.ls$P[which.max(rv.ls$power)],digit=2),'d')            
                 ylab <- 'Power'
                 name <- 'power'
         }
@@ -204,7 +204,7 @@ calc.1Dper <- function(Nmax.plots, vars,per.par,data){
     if(!exists('Inds')){
         Inds <- 0
     }
-    fname <- paste0(paste(per.target,collapse='_'),'_',paste(ypars,collapse='.'),'_',paste(per.type,collapse=''),'_MA',Nma,'proxy',paste(Inds,collapse='.'),'_',Nsig.max,'sig_',paste(Pmaxs,collapse='d'),'d')
+    fname <- paste0(paste(per.target,collapse='_'),'_',paste(ypars,collapse='.'),'_',paste(per.type,collapse=''),'_MA',paste(Nma,collapse=''),'proxy',paste(Inds,collapse='.'),'_',Nsig.max,'sig_',paste(Pmaxs,collapse='d'),'d')
     return(list(per.data=per.data,tits=tits,pers=pers,levels=sig.levels,ylabs=ylabs,fname=fname,fs=fs))
 }
 
@@ -291,6 +291,7 @@ per2D.data <- function(vars,per.par,data){
     }
     Indices <- NA
     per.type <- pars[[i]]$per.type
+    var <- pars[[i]]$var
     if(length(per.target)>1){
         instrument <- 'combined'
         subdata <- lapply(1:length(per.target),function(j) data[[per.target[j]]])
@@ -307,7 +308,7 @@ per2D.data <- function(vars,per.par,data){
     }
     ypar <- var
     t <- tab[,1]%%2400000#min(tab[,1])
-    y <- tab[,2]
+    y <- tab[,ypar]
     dy <- tab[,3]
     if(length(per.target)==1){
         mp <- MP(t=t,y=y,dy=dy,Dt=Dt,nbin=Nbin,ofac=ofac,fmin=frange[1],fmax=frange[2],per.type=per.type,sj=0,Nma=Nma,Inds=Inds,Indices=Indices)
@@ -318,11 +319,11 @@ per2D.data <- function(vars,per.par,data){
     y2 <- mp$P
     z2 <- mp$powers
     z2.rel <- mp$rel.powers
-    fname <- paste0(paste(per.target,collapse='_'),'_MP_',paste(per.type,collapse=''),'_MA',Nma,'proxy',paste(Inds,collapse='.'))
+    fname <- paste0(paste(per.target,collapse='_'),'_MP_',paste(per.type,collapse=''),'_MA',paste(Nmas,collapse=''),'proxy',paste(Inds,collapse='.'))
     if(length(per.target)==1){
-        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel,fname=fname))
+        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel,fname=fname,ypar=ypar))
     }else{
-        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel,subdata=subdata,idata=idata,fname=fname))
+        return(list(t=t,y=y,dy=dy,xx=x2,yy=y2,zz=z2,zz.rel=z2.rel,subdata=subdata,idata=idata,fname=fname,ypar=ypar))
     }
 }
 
@@ -335,6 +336,7 @@ plotMP <- function(vals,pars){
         subdata <- vals$subdata
         idata <- vals$idata
     }
+    ypar <- vals$ypar
     t <- vals$t
     y <- vals$y
     dy <- vals$dy

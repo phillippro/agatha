@@ -163,7 +163,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
     })
 
     output$Inds <- renderUI({
-        if(is.null(input$per.type) | is.null(data()) | is.null(Ntarget())) return()
+        if(is.null(input$per.type) | is.null(data()) | is.null(Ntarget()) | is.null(NI.max())) return()
 #        if(all(NI.max()==0)) return()
         if(input$per.type!='BFP' & input$per.type!='MLP') return()
         lapply(1:Ntarget(),function(i){
@@ -397,21 +397,30 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
 
 ###variable names dependent on per.target
     ns.1D <- reactive({
-        if(is.null(input$per.target) & is.null(input$per.target2)) return()
+        if(is.null(input$per.target)) return()
         nam <- c()
         if(length(input$per.target)>0){
             tar <- input$per.target
         }
-#        if(length(input$per.target2)>0){
-#            tar <- input$per.target2
-#        }
         for(i in 1:length(input$per.target)){
             names <- colnames(data()[[tar[i]]])
-#            cat('names=',names,'\n')
             names <- names[-c(1,3)]#e.g. 'Time' and 'eRV' for RV data
-#            cat('names=',names,'\n')
             names <- c(names,'Window Function')
-                                        #      nam <- c(nam,paste(names(data())[i],names,sep=':'))
+            nam <- c(nam,names)
+        }
+        return(unique(nam))
+    })
+
+    ns.2D <- reactive({
+        if(is.null(input$per.target2)) return()
+        nam <- c()
+        if(length(input$per.target2)>0){
+            tar <- input$per.target2
+        }
+        for(i in 1:length(input$per.target2)){
+            names <- colnames(data()[[tar[i]]])
+            names <- names[-c(1,3)]#e.g. 'Time' and 'eRV' for RV data
+            names <- c(names,'Window Function')
             nam <- c(nam,names)
         }
         return(unique(nam))
@@ -440,6 +449,9 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         if(is.null(data()) | is.null(input$scatter.target)) return()
         names <- ns.wt()$name
         nam <- names[grep(input$scatter.target,names)]
+        if(length(nam)==0){
+            nam <- names[grep(gsub('\\+','.+',input$scatter.target),names)]
+        }
         selectizeInput("xs", "Choose x axis",
                        choices  = nam,
                        selected = nam[1],multiple=FALSE)
@@ -450,6 +462,9 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
         if(is.null(data()) | is.null(input$scatter.target)) return()
         names <- ns.wt()$name
         nam <- names[grepl(input$scatter.target,names)]
+        if(length(nam)==0){
+            nam <- names[grep(gsub('\\+','.+',input$scatter.target),names)]
+        }
         selectizeInput("ys", "Choose y axis",
                        choices  = nam,
                        selected = nam[2],multiple=FALSE)
@@ -519,15 +534,15 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             selectInput("yvar", "Choose observables", choices  = ns.1D(),selected = ns.1D()[1],multiple=TRUE)
         }else{
             selectInput("yvar", "Choose observables",
-                        choices  = ns.1D()[1],
-                        selected = ns.1D()[1],multiple=FALSE)
+                        choices  = ns.1D()[ns.1D()!='Window Function'],
+                        selected = ns.1D()[1],multiple=TRUE)
         }
     })
 
   output$var2 <- renderUI({
       if(is.null(input$per.type2)) return()
       selectInput("yvar2", "Choose observables",
-                        choices  = ns()[1],
+                        choices  = ns()[ns.2D()!='Window Function'],
                         selected = ns()[1],multiple=FALSE)
   })
 

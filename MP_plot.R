@@ -11,6 +11,14 @@ size <- 1.5
 s <- 5
 par(cex.axis=size,cex.lab=size,cex=size,oma=c(s,0,0,0),mar=c(0,0,0,0))
 layout(matrix(1:4, ncol = 2,byrow=TRUE), widths = 1, heights = c(2,4), respect = FALSE)
+if(exists('ypar')){
+    ylab <- ypar
+    if(grepl('RV',ypar)){
+        ylab <- 'RV [m/s]'
+    }
+}else{
+    ylab <- 'RV [m/s]'
+}
 ###data plot
 for(j in 1:2){
     if(j==1){
@@ -28,9 +36,9 @@ for(j in 1:2){
             dy1 <- idata[[k]][,3]
             if(k==1){
                 if(j==1){
-                    plot(t1%%2400000,y1,ylab='RV [m/s]',xaxt='n',pch=20,cex=0.5,xlim=xlim,ylim=range(y),col=cols[1])
+                    plot(t1%%2400000,y1,ylab=ylab,xaxt='n',pch=20,cex=0.5,xlim=xlim,ylim=range(y),col=cols[1])
                 }else{
-                    plot(t1%%2400000,y1,ylab='RV [m/s]',xaxt='n',yaxt='n',pch=20,cex=0.5,xlim=xlim,ylim=range(y),col=cols[1])
+                    plot(t1%%2400000,y1,ylab=ylab,xaxt='n',yaxt='n',pch=20,cex=0.5,xlim=xlim,ylim=range(y),col=cols[1])
                 }
             }else{
                 points(t1%%2400000,y1,col=cols[k-1],pch=20,cex=0.5)
@@ -39,9 +47,9 @@ for(j in 1:2){
         }
     }else{
         if(j==1){
-            plot(t,y,ylab='RV [m/s]',xaxt='n',pch=20,cex=0.5)
+            plot(t,y,ylab=ylab,xaxt='n',pch=20,cex=0.5)
         }else{
-            plot(t,y,ylab='RV [m/s]',xaxt='n',yaxt='n',pch=20,cex=0.5)
+            plot(t,y,ylab=ylab,xaxt='n',yaxt='n',pch=20,cex=0.5)
         }
         arrows(t,y-dy,t,y+dy,length=0.03,angle=90,code=3)
     }

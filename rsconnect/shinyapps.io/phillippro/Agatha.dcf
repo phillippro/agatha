@@ -1,7 +1,9 @@
 name: Agatha
+title:
 account: phillippro
 server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
 appId: 150471
-bundleId: 831460
+bundleId: 958518
 url: https://phillippro.shinyapps.io/Agatha/
-when: 1495055490.34966
+when: 1504003513.24407
