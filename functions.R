@@ -234,7 +234,8 @@ per1D.plot <- function(per.data,tits,pers,levels,ylabs,download=FALSE,index=NULL
         if(grepl('Window',titles[i])){
             ylim <- c(ymin,max(power)+0.15*(max(power)-ymin))
         }else{
-            ylim <- c(ymin,max(max(power)+0.15*(max(power)-ymin),levels[which(!is.na(levels[,i])),i]))
+#            ylim <- c(ymin,max(max(power)+0.15*(max(power)-ymin),levels[which(!is.na(levels[,i])),i]))
+            ylim <- c(ymin,max(power)+0.15*(max(power)-ymin))
         }
         plot(P,power,xlab='Period [day]',ylab=ylab,xaxt='n',log='x',type='l',main=titles[i], ylim=ylim)
         magaxis(side=1,tcl=-0.5)
@@ -347,7 +348,7 @@ plotMP <- function(vals,pars){
     source('MP_plot.R',local=TRUE)
 }
 
-calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
+calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL,Npoly=c(2,0)){
     t <- data[,1]
     y <- data[,2]
     dy <- data[,3]
@@ -360,11 +361,26 @@ calcBF <- function(data,Nbasic,proxy.type,Nma.max,groups=NULL,Nproxy=NULL){
             NI.inds[[1]] <- Nbasic
             Indices <- data[,4:ncol(data),drop=FALSE]
             cors <- c()
+            ###detrend the data first
+            if(Npoly[1]>0){
+                x <- t
+                p <- lm(y~poly(x,Npoly[1]))
+                y1 <- residuals(p)
+            }else{
+                y1 <- y
+            }
             for(j in 1:ncol(Indices)){
                 if(sd(Indices[,j])==0){
-                cors <- c(cors,0)
+                    cors <- c(cors,0)
                 }else{
-                cors <- c(cors,abs(cor(Indices[,j],y)))
+                    if(Npoly[2]>0){
+                        z <- Indices[,j]
+                        p <- lm(z~poly(x,Npoly[2]))
+                        z1 <- residuals(p)
+                    }else{
+                        z1 <- Indices[,j]
+                    }
+                    cors <- c(cors,abs(cor(z1,y1)))
                 }
             }
             inds <- sort(cors,decreasing=TRUE,index.return=TRUE)$ix

@@ -307,7 +307,7 @@ powerLevel <- function(FAPlevel,M,N,m,norm='Cumming'){
     return(probInv(1-(1-FAPlevel)^(1/M),N,norm,m=m))
 }
 
-lsp <- function (x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, alpha = 0.01) 
+lsp <- function(x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, alpha = 0.01) 
 {
     times <- as.numeric(times)
     start <- min(times)
@@ -332,7 +332,7 @@ lsp <- function (x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, 
     if (n.out == 0) 
         stop("erroneous frequency range specified ")
     x <- t * 2 * pi
-    if(sd(y)!=0){
+    if(sd(y)!=0 & FALSE){
         y <- y - mean(y)
     }
     if(var(y)==0){
@@ -374,7 +374,7 @@ lsp <- function (x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, 
     par.up <- c(A=Amax,B=Bmax)
     par.fix <- list(omega=omega,phi=phi)
     df <- list(t=t,y=y,par.fix=par.fix)
-    out <- nls.lm(par = start,lower=par.low,upper=par.up,fn =lsp.res,df=df,control=nls.lm.control(maxiter=500))
+    out <- nls.lm(par = start,lower=par.low,upper=par.up,fn=lsp.res,df=df,control=nls.lm.control(maxiter=500))
     par.full <- c(as.list(coef(out)),par.fix)
     yp <- lsp.model(t,par.full)
     res <- y-yp

@@ -28,7 +28,11 @@ for(j in 1:2){
     }
 ###plot
     Ntarget <- length(per.target)
-    cols <- c('black','red','blue','green','orange','brown','cyan','pink')
+    if(Ntarget>8){
+        cols <- rainbow(Ntarget)
+    }else{
+        cols <- c('black','red','blue','green','orange','brown','cyan','pink')
+    }
     if(exists('idata')){
         for(k in 1:Ntarget){
             t1 <- idata[[k]][,1]
@@ -41,9 +45,11 @@ for(j in 1:2){
                     plot(t1%%2400000,y1,ylab=ylab,xaxt='n',yaxt='n',pch=20,cex=0.5,xlim=xlim,ylim=range(y),col=cols[1])
                 }
             }else{
-                points(t1%%2400000,y1,col=cols[k-1],pch=20,cex=0.5)
+                points(t1%%2400000,y1,col=cols[k],pch=20,cex=0.5)
             }
-            arrows(t1,y1-dy1,t1,y1+dy1,length=0.03,angle=90,code=3,col=cols[k])
+            if(mean(dy1)>0.01*abs(mean(y1))){
+                arrows(t1,y1-dy1,t1,y1+dy1,length=0.03,angle=90,code=3,col=cols[k])
+            }
         }
     }else{
         if(j==1){
@@ -51,7 +57,9 @@ for(j in 1:2){
         }else{
             plot(t,y,ylab=ylab,xaxt='n',yaxt='n',pch=20,cex=0.5)
         }
-        arrows(t,y-dy,t,y+dy,length=0.03,angle=90,code=3)
+        if(mean(dy)>0.01*sd(y)){
+            arrows(t,y-dy,t,y+dy,length=0.03,angle=90,code=3)
+        }
     }
 }
 #######periodograsm plot
@@ -120,14 +128,18 @@ for(j in 1:2){
             }else{
                 axis(side=1)
             }
-            ticks <- seq(log10(pmin),log10(pmax),length.out=5)
-            tick.lab <- c('',format(10^ticks[-c(1,length(ticks))],digit=2),'')
-            axis(side=2,at=ticks,labels=tick.lab)
+            magaxis(side=2,unlog=TRUE,tcl=-0.5)
+            if(FALSE){
+                ticks <- seq(log10(pmin),log10(pmax),length.out=5)
+                tick.lab <- c('',format(10^ticks[-c(1,length(ticks))],digit=2),'')
+                axis(side=2,at=ticks,labels=tick.lab)
+            }
         }
     }
     if(exists('sigs') & show.signal){
-        abline(h=log10(sigs),lty=3,lwd=2,col='grey')
+#        abline(h=log10(sigs),lty=3,lwd=2,col='grey')
         text(rep(min(t),length(sigs)),log10(sigs),labels=format(sigs,digit=3),pos=4,cex=size,col='grey',offset=-0.0)
+        arrows(min(t)-0.1*(max(t)-min(t)),log10(sigs),min(t),log10(sigs),length=0.03,angle=90,code=3,col=cols[k])
 ####these signals show
         FP <- FALSE
         if(FP){

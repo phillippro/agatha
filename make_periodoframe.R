@@ -116,7 +116,8 @@ for(kk in 1:length(per.types)){
         }
 
         ymin <- min(per$power)
-        ylim <- c(ymin,max(max(per$power)+0.2*(max(per$power)-ymin),per$sig.level[which(!is.na(per$sig.level))]))
+#        ylim <- c(ymin,max(max(per$power)+0.2*(max(per$power)-ymin),per$sig.level[which(!is.na(per$sig.level))]))
+        ylim <- c(ymin,max(per$power)+0.2*(max(per$power)-ymin))
         if(per.type=='MLP' | per.type=='BFP'){
             plot(per$P,per$power,xlab='Period [day]',ylab=ylab,type='l',log='x',ylim=ylim,main=main,xaxt='n')
             magaxis(side=1,tcl=-0.5)

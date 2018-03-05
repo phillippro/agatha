@@ -89,7 +89,6 @@ for(j in 1:2){
             axis(side=2,at=ticks,labels=tick.lab)
         }
     }
-cat('ok2\n')
     if(exists('sigs')){
         abline(h=log10(sigs),lty=3,lwd=2,col='grey')
         text(rep(min(t),length(sigs)),log10(sigs),labels=format(sigs,digit=3),pos=4,cex=size,col='grey',offset=-0.0)

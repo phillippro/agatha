@@ -342,9 +342,9 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
             }
             ind <- c()
             for(j in 1:ncol(tab)){
-                if(sd(tab[,j])==0){
-                  tab[,j] <- abs(rnorm(nrow(tab),1,0.01))
-	        }
+                    if(sd(tab[,j])==0){
+		       tab[,j] <- abs(rnorm(nrow(tab),1,0.01))
+		    }
                 ind <- c(ind,j)
             }
             df[[i]] <- tab[,ind]

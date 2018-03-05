@@ -26,7 +26,7 @@ trend <- TRUE
 #trend <- TRUE
 Nap <- 1#number of aperture
 Nc <- 0#1
-per.types <- c('MLP')#the periodograms to calculate
+per.types <- c('BFP')#the periodograms to calculate
 #per.types <- c('BFP','MLP','BGLS','GLST','GLS','LS')
 per.type.seq <- per.types[1]
 sequential <- TRUE
@@ -128,7 +128,7 @@ dy <- tab[,3]
 plot.proxy <- 'NA'
 if(plot.proxy=='window'){
     y <- rep(1,length(t))
-#    dy <- rep(0.1,length(t))
+    dy <- rep(0.1,length(t))
     per.types <- 'LS'
     sequential <- FALSE
     Nma <- 0
