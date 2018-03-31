@@ -4,25 +4,7 @@
 ### online web app 
 
 The shiny app of Agatha is available [here](https://phillippro.shinyapps.io/Agatha/) or [here](http://www.agatha.herts.ac.uk).
-If you use Agatha in your work, please cite **"Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangle periodic signals from correlated noise in a periodogram framework, MNRAS, 470, 4794"** or use the following bibtex.
-```
-@ARTICLE{2017MNRAS.470.4794F,
-   author = {{Feng}, F. and {Tuomi}, M. and {Jones}, H.~R.~A.},
-    title = "{Agatha: disentangling periodic signals from correlated noise in a periodogram framework}",
-  journal = {\mnras},
-archivePrefix = "arXiv",
-   eprint = {1705.03089},
- primaryClass = "astro-ph.EP",
- keywords = {methods: data analysis, methods: statistical, techniques: radial velocities, stars: individual: HD 177565, HD 41248, CoRoT-7},
-     year = 2017,
-    month = oct,
-   volume = 470,
-    pages = {4794-4814},
-      doi = {10.1093/mnras/stx1126},
-   adsurl = {http://adsabs.harvard.edu/abs/2017MNRAS.470.4794F},
-  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-}
-```
+If you use Agatha in your work, please cite **"Feng F., Tuomi M., Jones H. R. A., 2017, Agatha: disentangle periodic signals from correlated noise in a periodogram framework, MNRAS in press"**. The paper is available on [arxiv](https://arxiv.org/abs/1705.03089).
 
 ### use the app locally
 If you want to use the app locally, you download the whole GitHub repository to a local directory. Then you should install R and R packages. The user should install packages 'shiny', 'magicaxis', 'minpack.lm' and 'fields'. For example,

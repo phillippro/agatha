@@ -4,6 +4,6 @@ account: phillippro
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 150471
-bundleId: 1253960
+bundleId: 1296197
 url: https://phillippro.shinyapps.io/Agatha/
-when: 1520286906.19672
+when: 1522530269.48542
