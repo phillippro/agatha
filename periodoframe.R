@@ -1,8 +1,9 @@
 library(minpack.lm)
 source('periodograms.R')
 #library(lomb)
-tol <- 1e-16
+tol <- 1e-18
 tol2 <- 1e-20
+tol3 <- 1e-30
 #trend <- FALSE
 RV.model <- function(par,data){
 ####
@@ -66,7 +67,7 @@ rv.res <- function(par,data){
     dy <- data$data[,3]
 ###add a large constant to make the logL always positive and thus avoid errors
 #    tmp <- sqrt((y-RV.model(par,data))^2/(2*(dy^2+par$sj^2)) + 0.5*log(dy^2+par$sj^2)+100)
-    tmp <- (y-RV.model(par,data))^2/(2*(dy^2+par$sj^2)) + 0.5*log(dy^2+par$sj^2)+100
+    tmp <- sqrt((y-RV.model(par,data))^2/(2*(dy^2+par$sj^2)) + 0.5*log(dy^2+par$sj^2)+0.5*log(2*pi))
     if(any(is.na(tmp))){
         cat('inside=',head((y-RV.model(par,data))^2/(2*(dy^2+par$sj^2))),'\n')
     }
@@ -105,6 +106,7 @@ nlopt <- function(pars,type='noise'){
             par.up <- c(par.up,d=dmax)
         }
     }
+cat('par.up=',par.up,'\n')
     start$sj <- sj.ini
     par.low <- c(par.low,sj=sj.min)
     par.up <- c(par.up,sj=sj.max)
@@ -273,8 +275,8 @@ rv.red <- function(par,df){
         }
     }
     white.par <- try(solve(lin.mat,vec.rh,tol=tol),TRUE)#gamma,beta,dj
-    if(class(white.par)=='try-error')     white.par <- try(solve(lin.mat,vec.rh,tol=tol2))
-    if(class(white.par)=='try-error')     white.par <- solve(lin.mat,vec.rh,tol=tol2^3)
+    if(class(white.par)=='try-error')     white.par <- try(solve(lin.mat,vec.rh,tol=tol2),TRUE)
+    if(class(white.par)=='try-error')     white.par <- solve(lin.mat,vec.rh,tol=tol3)
     ind0 <- length(white.par)-NI-1
 if(length(white.par)==1){
     cat('white.par=',white.par,'\n')
@@ -443,7 +445,7 @@ rv.red.res <- function(par,df){
 #    }
     sj <- par$sj
 #    tmp <- sqrt((y-v)^2/(2*(dy^2+sj^2)) + 0.5*log(dy^2+sj^2)+100)
-    tmp <- (y-v)^2/(2*(dy^2+sj^2)) + 0.5*log(dy^2+sj^2)+100
+    tmp <- sqrt((y-v)^2/(2*(dy^2+sj^2)) + 0.5*log(dy^2+sj^2)+0.5*log(2*pi))
     return(tmp)
 }
 
@@ -819,10 +821,10 @@ global.notation <- function(t,y,dy,Indices,Nma,NI){
 }
 
 ####Marginalized likelihood periodogram
-MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,fmax=NULL,fmin=NULL,tspan=NULL,sampling='freq',model.type='MA',opt.par=NULL,Indices=NA,MLP.type='sub'){
+MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,fmax=NULL,fmin=NULL,tspan=NULL,model.type='MA',opt.par=NULL,Indices=NA,MLP.type='sub',sampling='combined',section=1){
                                         #    unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
     unit <- 1
-    if(length(Inds)>0){
+    if(length(Inds)>0 & !is.null(Indices) & !all(is.na(Indices))){
         if(all(Inds==0)){
             NI <- 0
         }else{
@@ -835,6 +837,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
         }
     }else{
         Inds <- 0
+        NI <- 0
     }
     if(NI==0) d <- 0
     if(Nma==0) m <- 0
@@ -849,13 +852,7 @@ MLP <- function(t, y, dy, Nma=0, Inds=0,mar.type='part',sj=0,logtau=NULL,ofac=1,
     if(is.null(fmax)){
         fmax <- fnyq
     }
-    if(sampling=='logP'){
-        logP.max <- log(1/fmin)
-        logP.min <- log(1/fmax)
-        f <- 1/exp(seq(logP.min,logP.max,length.out=1000*ofac))*unit
-    }else{
-        f <- seq(fmin,fmax,by=step)*unit
-    }
+    f <- fsample(fmin,fmax,sampling,section,ofac,unit)
     nout <- length(f)
     t <- (t-min(t))/unit#
     Ndata <- length(t)
@@ -1069,8 +1066,134 @@ bfp.inf <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
     cat('The optimal Nma=',Nma.opt,'Inds=',Inds.opt,'\n')
     return(list(Nma=Nma.opt,Inds=Inds.opt,logBFs=logBFs))
 }
+bfp.inf.norm <- function(vars,Indices,Nmas=NULL,NI.inds=NULL){
+    var <- names(vars)
+    for(k in 1:length(var)){
+        assign(var[k],vars[[var[k]]])
+    }
+    Ndata <- length(t)
+    if(is.null(Nmas)){
+        Nmas <- c(0,1,2)
+    }
+    if(is.null(NI.inds)){
+        NI.inds <- list(0,1:3,1:5,c(1:3,6:10),c(1:3,11:18))
+    }
+    nis <- c()
+    for(j in 1:length(NI.inds)){
+        if(any(NI.inds[[j]]==0)){
+            nis <- c(nis,0)
+        }else{
+            nis <- c(nis,length(NI.inds[[j]]))
+        }
+    }
+    ni.min <- min(nis)
+    Nma.opt <- Nmas[1]
+    Inds.opt <- NI.inds[[1]]
+    NI.opt <- length(Inds.opt)
 
-BFP.comp <- function(t, y, dy, Nmas,NI.inds=NULL,Indices=NULL){
+    logLmaxs <- array(data=NA,dim=c(length(NI.inds),length(Nmas)))
+    logBFs <- array(data=NA,dim=c(length(NI.inds),length(Nmas)))
+    lbm <- 0#maximum logBF
+    for(i in 1:length(Nmas)){
+        nma <- Nmas[i]
+        for(j in 1:length(NI.inds)){
+            if(!all(NI.inds[[j]]==0)){
+                ni <- length(NI.inds[[j]])
+                Inds <- NI.inds[[j]]
+                if(length(Inds)==1){
+                    indices <- matrix(Indices[,Inds],ncol=1)
+                }else{
+                    indices <- Indices[,Inds]
+                }
+            }else{
+                ni <- 0
+                indices <- Indices
+                Inds <- 0
+            }
+            Ntry <- 10*(round(ni/3)+2*nma)
+            lls <- c()
+            vars <- global.notation(t,y,dy,Indices=indices,Nma=nma,NI=ni)
+            tmp <- par.optimize(data,Indices=indices,NI=ni,Nma=nma,opt.type='sl',type='noise',pars=vars)
+            ps.opt <- c(logtau=vars$logtau.ini,m=vars$mini,d=vars$dini,sj=vars$sj.ini)
+            pp <- tmp$par
+            if(i==1 & j==1) pss <- pp
+            lls <- c(lls,tmp$logLmax)
+            Nsd <- 100
+            if(Ntry>1){
+                for(kk in 1:Ntry){
+                    vars$NI <- ni
+                    vars$Nma <- nma
+                    if(nma>0){
+                        for(ii in 1:10){
+                            vars$logtau.ini <- rnorm(1,pp$logtau,(vars$logtau.max-vars$logtau.min)/Nsd)#
+                            if(vars$logtau.ini>vars$logtau.min & vars$logtau.ini<vars$logtau.max) break()
+                        }
+                        for(ii in 1:10){
+                            vars$mini <- rnorm(1,unlist(pp[grepl('^m',names(pp))])[1],(vars$mmax-vars$mmin)/Nsd)
+                            if(vars$mini>vars$mmin & vars$mini<vars$mmax) break()
+                        }
+                    }
+                    if(ni>0){
+                        vars$dini <- runif(1,dmin,dmax)
+                        for(ii in 1:10){
+                            vars$dini <- rnorm(1,unlist(pp[grepl('^d',names(pp))][1]),(dmax-dmin)/Nsd)
+                            if(vars$dini>vars$dmin & vars$dini<vars$dmax) break()
+                        }
+                    }
+                    vars$sj.ini <- runif(1,sj.min,sj.max)
+                    vars$NI <- ni
+                    vars$Indices <- indices
+                    tmp <- try(par.optimize(data,Indices=indices,NI=ni,Nma=nma,opt.type='sl',type='noise',pars=vars))
+                    if(class(tmp)!='try-error'){
+                        if(tmp$logLmax>max(lls)){
+                                pp <- tmp$par
+                            }
+                            lls <- c(lls,tmp$logLmax)
+                    }
+                }
+            }
+            logLmaxs[j,i] <- max(lls)
+            if(nma>0){
+                pen <- 0.5*(ni-ni.min+nma+1)*log(Ndata)
+            }else{
+                pen <- 0.5*(ni-ni.min)*log(Ndata)
+            }
+            logBFs[j,i] <- logLmaxs[j,i]-logLmaxs[1,1]-pen
+            cat('log(BF) for Indices=',Inds,'and','Nma=',nma,'is',format(logBFs[j,i],digit=3),'\n\n')
+            penI <- log(150)
+            penMA <- log(150)
+            if(j>1 & i==1){
+                if(logBFs[j,i]>(max(logBFs[1:(j-1),1])+penI) & logBFs[j,i]>lbm){
+                    Inds.opt <- sort(Inds)
+                    Nma.opt <- nma
+                    pss <- pp
+		    lbm <- logBFs[j,i]
+                }
+            }
+            if(i>1 & j==1){
+                if(logBFs[j,i]>(max(logBFs[1,1:(i-1)])+penMA) & logBFs[j,i]>lbm){
+                    Inds.opt <- sort(Inds)
+                    Nma.opt <- nma
+                    pss <- pp
+		    lbm <- logBFs[j,i]
+                }
+            }
+            if(j>1 & i>1){
+                if(logBFs[j,i]>(max(logBFs[1:(j-1),1:i])+penI) & logBFs[j,i]>(max(logBFs[1:j,1:(i-1)])+penMA) & logBFs[j,i]>lbm){
+                    Inds.opt <- sort(Inds)
+                    Nma.opt <- nma
+                    pss <- pp
+		    lbm <- logBFs[j,i]
+                }
+            }
+        }
+        if(Nma.opt<nma) break()
+    }
+    cat('The optimal Nma=',Nma.opt,'Inds=',Inds.opt,'\n')
+    return(list(Nma=Nma.opt,Inds=Inds.opt,logBFs=logBFs))
+}
+
+BFP.comp <- function(t, y, dy, Nmas,NI.inds=NULL,Indices=NULL,progress=TRUE){
     t <- t-min(t)
     Ndata <- length(t)
     Indices <- as.matrix(Indices)
@@ -1089,7 +1212,11 @@ BFP.comp <- function(t, y, dy, Nmas,NI.inds=NULL,Indices=NULL){
 #####optimizing the noise parameters
 #########################################
     t1 <- proc.time()
-    out <- bfp.inf(vars,Indices,Nmas=Nmas,NI.inds=NI.inds)
+    if(progress){
+        out <- bfp.inf(vars,Indices,Nmas=Nmas,NI.inds=NI.inds)
+    }else{
+        out <- bfp.inf.norm(vars,Indices,Nmas=Nmas,NI.inds=NI.inds)
+    }
     t2 <- proc.time()
     dur <- format((t2-t1)[3],digit=3)
     cat('model comparison computation time:',dur,'s\n\n')
@@ -1136,15 +1263,48 @@ combine.data <- function(data,Ninds,Nmas){
     inds <- sort(out[,1],index.return=TRUE)$ix
     return(list(cdata=out[inds,],idata=idata))
 }
-
+fsample <- function(fmin,fmax,sampling,section=1,ofac=1,unit=1){
+    logP.max <- log(1/fmin)
+    logP.min <- log(1/fmax)
+    dlogP <- (logP.max-logP.min)/section
+    if(sampling=='logP'){
+        f <- c()
+        for(j in 1:section){
+            f <- c(f,1/exp(seq(logP.min+dlogP*(j-1),logP.min+dlogP*j,length.out=1000*ofac))*unit)
+        }
+    }else if(sampling=='freq'){
+        f <- c()
+        for(j in 1:section){
+#            f <- c(f,seq(fmin+df*(j-1),fmin+df*j,by=step)*unit)
+            f1 <- 1/exp(logP.max-dlogP*(j-1))
+            f2 <- 1/exp(logP.max-dlogP*j)
+            f <- c(f,seq(f1,f2,length.out=1000/section*min(5^(j-1),20)*ofac)*unit)
+        }
+    }else if(sampling=='combined'){
+        fl <- ff <- c()
+        for(j in 1:section){
+            fl <- c(fl,1/exp(seq(logP.min+dlogP*(j-1),logP.min+dlogP*j,length.out=1000*ofac))*unit)
+        }
+        for(j in 1:section){
+#            f <- c(f,seq(fmin+df*(j-1),fmin+df*j,by=step)*unit)
+            f1 <- 1/exp(logP.max-dlogP*(j-1))
+            f2 <- 1/exp(logP.max-dlogP*j)
+            ff <- c(ff,seq(f1,f2,length.out=1000/section*min(5^(j-1),20)*ofac)*unit)
+        } 
+        f <- sort(c(fl,ff))
+    }
+    f <- unique(f)
+    return(f)
+}
 ####Bayes factor periodogram
-BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='freq',model.type='MA',progress=TRUE,quantify=FALSE,dP=0.1){
+BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,logtau=NULL,ofac=1,  norm="Cumming",hifac=1,fmax=NULL,fmin=NA,tspan=NULL,sampling='combined',model.type='MA',progress=TRUE,quantify=FALSE,dP=0.1,section=1){
   #  unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
 #    cat('head(t)=',head(t),'\n')
 #    cat('head(y)=',head(y),'\n')
     unit <- 1
     if(length(Inds)>0){
         if(all(Inds==0)){
+#            Indices <- NA
             NI <- 0
         }else{
             Inds <- Inds[Inds>0]
@@ -1155,6 +1315,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
             }
         }
     }else{
+#        Indices <- NA
         Inds <- 0
     }
     if(NI==0) d <- 0
@@ -1172,13 +1333,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     }
     Nrep <- 1
     if(quantify) Nrep <- 2
-    if(sampling=='logP'){
-        logP.max <- log(1/fmin)
-        logP.min <- log(1/fmax)
-        f <- 1/exp(seq(logP.min,logP.max,length.out=1000*ofac))*unit
-    }else{
-        f <- seq(fmin,fmax,by=step)*unit
-    }
+    f <- fsample(fmin,fmax,sampling,section,ofac,unit)
     nout <- length(f)
     t <- (t-min(t))/unit#rescale time
     Ndata <- length(t)
@@ -1241,6 +1396,7 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
         chi2.ref <- tmp$chi2
         logLmax0 <- tmp$logLmax
     }
+
     p <- rep(NA,length(omegas))
     logLmax <- rep(NA,length(omegas))
     Npar <- length(tmp$par)
@@ -1326,17 +1482,10 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     logBF <- logLmax-logLmax0-log(length(y))#BIC-estimated BF; the extra free parameter n=2, which are {A, B}
 ####signals
     ind.max <- which.max(logBF)
-    inds <- which(logBF>(max(logBF)+log(0.01)))
+    inds <- sort(logBF,decreasing=TRUE,index.return=TRUE)$ix[1:10]
     Popt <- P[inds]
     opt.par <- opt.pars[inds,]
     logBF.opt <- logBF[inds]
-    ##sort
-    if(length(inds)>1){
-        ind.sort <- sort(logBF.opt,decreasing=TRUE,index.return=TRUE)$ix
-        Popt <- Popt[ind.sort]
-        opt.par <- opt.par[ind.sort,]
-        logBF.opt <- logBF.opt[ind.sort]
-    }
 ####calculate the residual
     par.fix <- list(omega=2*pi/Popt[1],phi=0)
 #    par.fix <- list(omega=2*pi/131,phi=0)
@@ -1350,17 +1499,17 @@ BFP <- function(t, y, dy, Nma=0, Inds=Inds,Indices=Indices,opt.type='sl',sj=0,lo
     yall <- RV.model(pp,data=df)
     ysig <- pp$A*cos(2*pi/Popt[1]*t)+pp$B*sin(2*pi/Popt[1]*t)
     ysigt <- ysig+pp$gamma+pp$beta*t
-    ynoise <- yall-ysigt
-    ynoiset <- yall-ysig
+    yred <- yall-ysigt
+    yredt <- yall-ysig
     res.nst <- y-yall
-    res.n <- y-ynoise
-    res.nt <- y-ynoiset
+    res.n <- y-yred
+    res.nt <- y-yredt
     res.s <- y-ysig
     res.st <- y-ysigt
     inds <- sort(logBF,decreasing=TRUE,index.return=TRUE)$ix
     ps <- P[inds[1:5]]
     power.opt <- logBF[inds[1:5]]
-    return(list(data=data,logBF=logBF,P=P,Popt=Popt,logBF.opt=logBF.opt,par=as.list(opt.par),res.nst=res.nst,res=res.nst,res.n=res.n,res.s=res.s,res.st=res.st,res.nt=res.nt,sig.level=log(150), power=logBF,ps=ps,power.opt=power.opt))
+    return(list(data=data,logBF=logBF,P=P,Popt=Popt,logBF.opt=logBF.opt,par.opt=as.list(opt.par[1,]),par=opt.par,res.nst=res.nst,res=res.nst,res.n=res.n,res.s=res.s,res.st=res.st,res.nt=res.nt,sig.level=log(150), power=logBF,ps=ps,power.opt=power.opt,ysig=ysig))
 }
 
 #####moving periodogram
@@ -1371,17 +1520,19 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
     tend <- min(t)+(0:n)*dt+Dt
     tmid <- (tstart+tend)/2
     df <- 1/(Dt*ofac)
-    rel.powers <- powers <- array(data=NA,dim=c((fmax-fmin)/df+1,nbin))
+    rel.powers <- powers <- c()
     ndata <- rep(NA,nbin)
     withProgress(message = 'Calculating moving periodogram', value = 0, {
         for(j in 0:n){
-            cat(paste0(Dt,'d window'),j+1,'/',nbin,'\n')
             incProgress(1/nbin, detail = paste0('window ',j+1,'/',nbin))
             inds <- which(t>=min(t)+j*dt & t<min(t)+j*dt+Dt)
-            if(any(is.na(Indices)) | is.null(Indices)){
+            if(any(is.na(Indices)) | any(is.null(Indices))){
                 index <- Indices
             }else{
-                index <- Indices[inds,,drop=FALSE]
+                index <- Indices[inds,]
+            }
+            if(is.null(dim(index))){
+                index <- matrix(index,ncol=1)
             }
             if(per.type=='BGLS'){
                 tmp <- bgls(t=t[inds],y=y[inds],err=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt)
@@ -1402,13 +1553,14 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
                 tmp[['P']] <- ps[inds]
             }
             index <- sort(tmp$P,index.return=TRUE)$ix
-            powers[,j+1] <- tmp$power[index]
-            rel.powers[,j+1] <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
+            relpower <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
+            rel.powers <- cbind(rel.powers,relpower)
             if(per.type=='MLP' | per.type=='BGLS'){
-                powers[,j+1] <- tmp$power[index]-max(tmp$power[index])
+                pp <- tmp$power[index]-max(tmp$power[index])
             }else{
-                powers[,j+1] <- tmp$power[index]
+                pp <- tmp$power[index]
             }
+            powers <- cbind(powers,pp)
             ndata[j+1] <- length(inds)
         }
     })
@@ -1416,24 +1568,23 @@ MP <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,tspan=NULL,Indices=NA,
 }
 
 ####MP without progress
-MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,per.type='MLP',...){
+MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,per.type='MLP',Indices=NA,...){
     n <- nbin-1
     dt <- (max(t)-min(t)-Dt)/n
     tstart <- min(t)+(0:n)*dt
     tend <- min(t)+(0:n)*dt+Dt
     tmid <- (tstart+tend)/2
     df <- 1/(Dt*ofac)
-    rel.powers <- powers <- array(data=NA,dim=c((fmax-fmin)/df+1,nbin))
+    rel.powers <- powers <- c()
     ndata <- rep(NA,nbin)
         for(j in 0:n){
-            cat(paste0(Dt,'d window'),j+1,'/',nbin,'\n')
+#            cat(paste0(Dt,'d window'),j+1,'/',nbin,'\n')
             inds <- which(t>=min(t)+j*dt & t<min(t)+j*dt+Dt)
-            if(any(is.na(Indices)) | is.null(Indices)){
+            if(any(is.na(Indices)) | any(is.null(Indices))){
                 index <- Indices
             }else{
                 index <- Indices[inds,]
             }
-
             if(is.null(dim(index))){
                 index <- matrix(index,ncol=1)
             }
@@ -1446,7 +1597,7 @@ MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,per.type='MLP',..
             }else if(per.type=='MLP'){
                 tmp <- MLP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,...)
             }else if(per.type=='BFP'){
-                tmp <- BFP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,Indices=index,progress=FALSE,...)
+                tmp <- BFP(t=t[inds],y=y[inds],dy=dy[inds],fmax=fmax,ofac=ofac,fmin=fmin,tspan=Dt,progress=FALSE,...)
             }else if(per.type=='LS'){
                 tmp <- lsp(times=t[inds],x=y[inds],ofac=ofac,from=fmin,to=fmax,tspan=Dt,alpha=c(0.1,0.01,0.001))
                 ps <- 1/tmp$scanned
@@ -1456,13 +1607,14 @@ MP.norm <- function(t, y, dy,Dt,nbin,fmax=1,ofac=1,fmin=1/1000,per.type='MLP',..
                 tmp[['P']] <- ps[inds]
             }
             index <- sort(tmp$P,index.return=TRUE)$ix
-            powers[,j+1] <- tmp$power[index]
-            rel.powers[,j+1] <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
+            relpower <- (tmp$power[index]-mean(tmp$power[index]))/(max(tmp$power[index])-mean(tmp$power[index]))
+            rel.powers <- cbind(rel.powers,relpower)
             if(per.type=='MLP' | per.type=='BGLS'){
-                powers[,j+1] <- tmp$power[index]-max(tmp$power[index])
+                pp <- tmp$power[index]-max(tmp$power[index])
             }else{
-                powers[,j+1] <- tmp$power[index]
+                pp <- tmp$power[index]
             }
+            powers <- cbind(powers,pp)
             ndata[j+1] <- length(inds)
         }
     return(list(tmid=tmid,P=tmp$P[index],powers=powers,rel.powers=rel.powers,ndata=ndata))

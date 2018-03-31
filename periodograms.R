@@ -1,5 +1,9 @@
+tol <- 1e-18
+tol2 <- 1e-20
+tol3 <- 1e-30
 ###The following function is adapted from bgls.py by Mortier et al. 2015
-bgls <- function(t, y, err, ofac=1,fmax=1,fmin=NA,tspan=NULL){
+bgls <- function(t, y, err, ofac=1,fmax=1,fmin=NA,tspan=NULL,sampling='combined',section=1){
+    unit <- 1
     t <- t-min(t)
     dy <- err
     if(is.null(tspan)){
@@ -13,7 +17,8 @@ bgls <- function(t, y, err, ofac=1,fmax=1,fmin=NA,tspan=NULL){
     if(is.na(fmin)){
         fmin <- 1/(ofac*tspan)
     }
-    f = seq(fmin,fmax,by=step)
+#    f = seq(fmin,fmax,by=step)
+    f <- fsample(fmin,fmax,sampling,section,ofac,unit)
     nout <- length(f)
     omegas <- 2*pi*f
     err2 <- err * err
@@ -87,7 +92,7 @@ bgls <- function(t, y, err, ofac=1,fmax=1,fmin=NA,tspan=NULL){
 }
 
 ###based on Zechmeister09.pdf or ZK09 and the lsp function in the 'lomb' library
-gls <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
+gls <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL,sampling='combined',section=1){
     t <- t-min(t)
     dy <- err
     if(is.null(tspan)){
@@ -99,6 +104,7 @@ gls <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
         fmin <- 1/(tspan*ofac)
     }
     f = seq(fmin,fmax,by=step)
+    f <- fsample(fmin,fmax,sampling,section,ofac,unit=1)
     nout <- length(f)
 #    nout = ofac * hifac * length(t)/2
 #    xdif = max(t)-min(t)
@@ -180,8 +186,9 @@ gls <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
 }
 
 ###generalized lomb-scargle periodogram with trend component
-glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
-    unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
+glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL,sampling='combined',section=1){
+#    unit <- 365.24#to make the elements of the matrix in the function of 'solve' on the same order
+    unit <- 1
     t <- t-min(t)
     if(is.null(tspan)){
         tspan <- max(t)-min(t)
@@ -190,7 +197,8 @@ glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
     if(is.na(fmin)){
         fmin <- 1/(tspan*ofac)
     }
-    f <- seq(fmin,fmax,by=step)*unit
+#    f <- seq(fmin,fmax,by=step)*unit
+    f <- fsample(fmin,fmax,sampling,section,ofac,unit)
     nout <- length(f)
     t <- (t-min(t))/unit
     omegas <- 2*pi*f
@@ -232,7 +240,9 @@ glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
         bigD <- CC*SS-CS^2
         lin.mat <- matrix(c(CC.hat,CS.hat,bigC,CT.hat,CS.hat,SS.hat,bigS,ST.hat,bigC,bigS,1,bigT,CT.hat,ST.hat,bigT,TT.hat),byrow=TRUE,nrow=4)
         vec.rh <- c(YC.hat,YS.hat,bigY,YT.hat)
-        pp <- solve(lin.mat,vec.rh,tol=1e-16)
+        pp <- try(solve(lin.mat,vec.rh,tol=tol),TRUE)
+        if(class(pp)=='try-error')         pp <- try(solve(lin.mat,vec.rh,tol=tol2),TRUE)
+        if(class(pp)=='try-error')         pp <- try(solve(lin.mat,vec.rh,tol=tol3))
         yp <- pp[1]*cos(omega*t)+pp[2]*sin(omega*t)+pp[3]+pp[4]*t
         chi2 <- sum(W*w*(y-yp)^2)
         p[k] <- (chi2.ref-chi2)/chi2.ref
@@ -287,7 +297,7 @@ glst <- function(t, y, err,ofac=1, norm="Cumming",fmax=1,fmin=NA,tspan=NULL){
     inds <- sort(power,decreasing=TRUE,index.return=TRUE)$ix
     ps <- 1/f[inds[1:5]]
     power.opt <- power[inds[1:5]]
-    return(list(P=unit/f, power=power, pvalue=pp, sig.level=level,Popt=P[ind.max],ps=ps,res=res,power.opt=power.opt))
+    return(list(P=unit/f, power=power, pvalue=pp, sig.level=level,Popt=P[ind.max],ps=ps,res=res,power.opt=power.opt,ysig=yp))
 }
 
 #give a power, calcuate the the p value
@@ -306,9 +316,37 @@ probInv <- function(Prob,N,m,norm='Cumming'){
 powerLevel <- function(FAPlevel,M,N,m,norm='Cumming'){
     return(probInv(1-(1-FAPlevel)^(1/M),N,norm,m=m))
 }
+findPeak3 <- function(p,power,max.only=TRUE,beta=0.1){
+                                        #sort
+    if(!max.only){
+        index <- sort(p,index.return=TRUE)$ix
+        p <- p[index]
+        power <- power[index]
+        ##
+        ii <- 2:(length(power)-1)
+        ii <- ii[which(power[ii]>median(power))]
+        inds <- ii[which(power[ii]>power[ii-1] & power[ii]>power[ii+1])]
+        jj <- inds[1]
+        for(j in 2:length(inds)){
+            dp <- p[inds[j]]-p[jj[length(jj)]]
+            Dp <- beta*p[jj[length(jj)]]
+            p1 <- power[inds[j]]
+            p0 <- power[jj[length(jj)]]
+            if(dp<Dp & p1>p0){
+                jj[length(jj)] <- inds[j]
+            }else if(dp>Dp){
+                jj <- c(jj,inds[j])
+            }
+        }
+        return(index[jj])
+    }else{
+        return(which.max(power)) 
+    }
+}
 
-lsp <- function(x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, alpha = 0.01) 
+lsp <- function(x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, alpha = 0.01,sampling='combined',section=1) 
 {
+    unit <- 1
     times <- as.numeric(times)
     start <- min(times)
     end <- max(times)
@@ -327,7 +365,8 @@ lsp <- function(x, times = NULL, from = NULL, to = NULL, tspan=NULL, ofac = 1, a
     if(is.null(from)){
         fmin <- 1/(ofac*tspan)
     }
-    freq = seq(fmin,fmax,by=step)
+#    freq = seq(fmin,fmax,by=step)
+    freq <- fsample(fmin,fmax,sampling,section,ofac,unit)
     n.out <- length(freq)
     if (n.out == 0) 
         stop("erroneous frequency range specified ")
