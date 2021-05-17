@@ -274,7 +274,7 @@ The BFP and MLP can be compared with the Lomb-Scargle periodogram (LS), the gene
                 data.path <- input$files[[i,'datapath']]
                 ns <- c(ns,input$files[[i,'name']])
                 tab <- read.table(data.path,nrows=1)
-                if(class(tab[1,1])=='factor'){
+                if(class(tab[1,1])!='numeric'){
                     tab <- read.table(data.path,header=TRUE,check.names=FALSE)
                 }else{
                     tab <- read.table(data.path)
